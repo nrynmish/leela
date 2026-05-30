@@ -1,12 +1,10 @@
 "use client";
 
-import { CalendarDays, MessageSquare, MoreHorizontal } from "lucide-react";
-
-import { AvatarGroup } from "./avatar-group";
-import { LabelPills } from "./label-pills";
-import { PriorityBadge } from "./priority-badge";
+import { MessageSquare, MoreHorizontal } from "lucide-react";
 
 import type { Ticket } from "@/lib/types";
+import { LabelPills } from "./label-pills";
+import { PriorityBadge } from "./priority-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AssigneeAvatar } from "./assignee-avatar";

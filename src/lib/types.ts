@@ -1,9 +1,3 @@
-export type Workspace = {
-  id: string;
-  name: string;
-  role: string;
-};
-
 export type ProjectStatus = "active" | "paused" | "done";
 
 export type Priority = "low" | "medium" | "high" | "urgent";
@@ -39,25 +33,12 @@ export type Ticket = {
   updatedAt: string;
 };
 
-export type ActivityItem = {
-  id: string;
-  actor: string;
-  action: string;
-  target: string;
-  time: string;
-};
-
-export type NotificationItem = {
-  id: string;
+export type TicketDraft = {
   title: string;
-  description: string;
-  time: string;
-  unread?: boolean;
-};
-
-export type StatItem = {
-  label: string;
-  value: string;
-  delta: string;
-  direction: "up" | "down";
+  summary: string;
+  status: TicketStatus;
+  priority: Priority;
+  projectId: string;
+  assignee: string;
+  labels: string[];
 };
