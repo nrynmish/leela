@@ -7,13 +7,17 @@ export type TicketStatus = "backlog" | "todo" | "in-progress" | "review" | "done
 export type Project = {
   id: string;
   name: string;
+  objective: string;
   description: string;
-  status: ProjectStatus;
+  status: "active" | "paused" | "done";
   progress: number;
+  deadline: string;
+  ticketCount: number;
   dueDate: string;
   members: {
     name: string;
     initials: string;
+    role: string;
   }[];
 };
 

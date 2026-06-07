@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 const statusStyles: Record<Project["status"], string> = {
   active: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
@@ -24,11 +25,12 @@ export function ProjectCard({
   onOpen: (project: Project) => void;
 }) {
   return (
-    <Card className="group transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
-      <CardHeader className="space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
+    <Link href={`/projects/${project.id}`}>
+      <Card className="group transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+        <CardHeader className="space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
               <h3 className="text-base font-semibold tracking-tight">{project.name}</h3>
               <Badge
                 variant="outline"
@@ -77,5 +79,6 @@ export function ProjectCard({
         </Button>
       </CardContent>
     </Card>
+    </Link>
   );
 }

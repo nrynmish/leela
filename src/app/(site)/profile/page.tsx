@@ -1,4 +1,17 @@
-// src/app/(site)/profile/page.tsx
+import { currentUser } from "@/lib/mock-profile";
+
+import { MemberProfile } from "@/components/profile/member-profile";
+import { HeadProfile } from "@/components/profile/head-profile";
+import { AdminProfile } from "@/components/profile/admin-profile";
+
 export default function ProfilePage() {
-  return <div className="p-6">Profile</div>;
+  if (currentUser.role === "member") {
+    return <MemberProfile user={currentUser} />;
+  }
+
+  if (currentUser.role === "head") {
+    return <HeadProfile user={currentUser} />;
+  }
+
+  return <AdminProfile user={currentUser} />;
 }
