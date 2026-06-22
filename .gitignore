@@ -1,15 +1,16 @@
 # Python
-backend/.venv/
-backend/__pycache__/
-backend/.pytest_cache/
+**/__pycache__/
+*.pyc
+*.pyo
 
-# Node
+backend/.venv/
+
+# Alembic
+backend/alembic/versions/__pycache__/
+
+# Next
 frontend/node_modules/
 frontend/.next/
 
 # Env
-.env
 backend/.env
-
-# OS
-.DS_Store
