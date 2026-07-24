@@ -1,3 +1,5 @@
+import type { User } from "@/types/auth";
+
 export type UserRole =
   | "member"
   | "head"
@@ -29,13 +31,7 @@ export type AdminStats = {
   closedTickets: number;
 };
 
-export type UserProfile = {
-  id: string;
-  name: string;
-  role: UserRole;
-  email: string;
-  rollNo: string;
-  department: string;
+export type ProfileExtras = {
   avatar?: string;
 
   skills: string[];
@@ -48,3 +44,6 @@ export type UserProfile = {
 
   activity: ActivityItem[];
 };
+
+export type CompleteProfile =
+  User & ProfileExtras;

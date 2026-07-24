@@ -1,18 +1,6 @@
-import type { UserProfile } from "./profile-types";
+import type { ProfileExtras } from "./profile-types";
 
-export const currentUser: UserProfile = {
-  id: "1",
-
-  name: "Narayan Mishra",
-
-  role: "head",
-
-  email: "narayan@ugvdtu.in",
-
-  rollNo: "2K24/EC/001",
-
-  department: "Electronics",
-
+export const profileExtras: ProfileExtras = {
   skills: [
     "ROS",
     "ROS2",

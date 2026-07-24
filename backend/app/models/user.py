@@ -31,6 +31,11 @@ class User(Base):
         nullable=False,
     )
 
+    department: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+    )
+
     password_hash: Mapped[str] = mapped_column(
         String(255),
         nullable=False,

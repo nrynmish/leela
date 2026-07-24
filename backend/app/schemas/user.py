@@ -12,6 +12,11 @@ class UserCreate(BaseModel):
 
     password: str = Field(min_length=8)
 
+    department: str = Field(
+        min_length=1,
+        max_length=100,
+    )
+
 
 class UserLogin(BaseModel):
     roll_no: str
@@ -29,6 +34,8 @@ class UserResponse(BaseModel):
     full_name: str
 
     role: UserRole
+
+    department: str
 
     model_config = {
         "from_attributes": True,

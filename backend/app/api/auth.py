@@ -5,9 +5,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.db.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse
-from app.services.security import hash_password
-
 from app.schemas.user import (
     UserCreate,
     UserResponse,
@@ -66,6 +63,7 @@ def register(
         roll_no=payload.roll_no,
         email=payload.email,
         full_name=payload.full_name,
+        department=payload.department,
         password_hash=hash_password(
             payload.password
         ),

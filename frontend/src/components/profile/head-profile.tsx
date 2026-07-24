@@ -2,12 +2,12 @@ import { ProfileActivity } from "./profile-activity";
 import { ProfileHeader } from "./profile-header";
 import { ProfileStats } from "./profile-stats";
 
-import type { UserProfile } from "@/lib/profile-types";
+import type { CompleteProfile } from "@/lib/profile-types";
 
 export function HeadProfile({
   user,
 }: {
-  user: UserProfile;
+  user: CompleteProfile;
 }) {
   return (
     <div className="space-y-6">
