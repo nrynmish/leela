@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { projects } from "@/lib/mock-data";
+import { getProject } from "@/lib/projects";
 
 import { ProjectHeader } from "@/components/projects/project-header";
 import { ProjectMetadata } from "@/components/projects/project-metadata";
@@ -14,11 +14,11 @@ export default async function ProjectDetailPage({
 }) {
   const { id } = await params;
 
-  const project = projects.find(
-    (project) => project.id === id
-  );
+  let project;
 
-  if (!project) {
+  try {
+    project = await getProject(Number(id));
+  } catch {
     notFound();
   }
 
@@ -27,9 +27,9 @@ export default async function ProjectDetailPage({
       <ProjectHeader project={project} />
 
       <ProjectMetadata
-        progress={project.progress}
+        status={project.status}
         deadline={project.deadline}
-        ticketCount={project.ticketCount}
+        createdBy={project.created_by}
       />
     </div>
   );

@@ -7,13 +7,13 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 
 export function ProjectMetadata({
-  progress,
+  status,
   deadline,
-  ticketCount,
+  createdBy,
 }: {
-  progress: number;
-  deadline: string;
-  ticketCount: number;
+  status: string;
+  deadline: string | null;
+  createdBy: number;
 }) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
@@ -22,11 +22,11 @@ export function ProjectMetadata({
           <FolderKanban className="mb-3 h-5 w-5 text-muted-foreground" />
 
           <p className="text-sm text-muted-foreground">
-            Progress
+            Status
           </p>
 
-          <p className="mt-2 text-3xl font-semibold">
-            {progress}%
+          <p className="mt-2 text-3xl font-semibold capitalize">
+            {status}
           </p>
         </CardContent>
       </Card>
@@ -36,11 +36,11 @@ export function ProjectMetadata({
           <CheckCircle2 className="mb-3 h-5 w-5 text-muted-foreground" />
 
           <p className="text-sm text-muted-foreground">
-            Tickets
+            Created By
           </p>
 
           <p className="mt-2 text-3xl font-semibold">
-            {ticketCount}
+            #{createdBy}
           </p>
         </CardContent>
       </Card>
@@ -54,7 +54,9 @@ export function ProjectMetadata({
           </p>
 
           <p className="mt-2 text-lg font-medium">
-            {deadline}
+            {deadline
+              ? new Date(deadline).toLocaleDateString()
+              : "No deadline"}
           </p>
         </CardContent>
       </Card>

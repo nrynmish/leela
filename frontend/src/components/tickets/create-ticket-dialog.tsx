@@ -177,7 +177,7 @@ export function CreateTicketDialog({
                   onValueChange={(value) =>
                     setForm((current) => ({
                       ...current,
-                      projectId: value,
+                      projectId: value ?? "",
                     }))
                   }
                 >
@@ -201,7 +201,7 @@ export function CreateTicketDialog({
                   onValueChange={(value) =>
                     setForm((current) => ({
                       ...current,
-                      assignee: value,
+                      assignee: value ?? "",
                     }))
                   }
                 >

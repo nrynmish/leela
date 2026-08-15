@@ -206,7 +206,7 @@ export function TicketDetailSheet({
                   <label className="text-sm font-medium">Project</label>
                   <Select
                     value={form.projectId}
-                    onValueChange={(value) => updateField("projectId", value)}
+                    onValueChange={(value) => updateField("projectId", value ?? "")}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select project" />

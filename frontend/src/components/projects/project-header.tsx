@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 
-import type { Project } from "@/lib/types";
-
+import type { Project } from "@/lib/projects";
 export function ProjectHeader({
   project,
 }: {
