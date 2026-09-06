@@ -1,3 +1,8 @@
+export type UserRole =
+  | "member"
+  | "head"
+  | "admin";
+
 export interface LoginRequest {
   roll_no: string;
   password: string;
@@ -15,5 +20,5 @@ export interface User {
   email: string;
   full_name: string;
   department: string;
-  role: "MEMBER" | "HEAD" | "ADMIN";
+  role: UserRole;
 }

@@ -1,40 +1,69 @@
 export type ProjectStatus = "active" | "paused" | "done";
 
-export type Priority = "low" | "medium" | "high" | "urgent";
+export type Priority =
+  | "low"
+  | "medium"
+  | "high"
+  | "urgent";
 
-export type TicketStatus = "backlog" | "todo" | "in-progress" | "review" | "done";
+export type TicketStatus =
+  | "backlog"
+  | "todo"
+  | "in-progress"
+  | "review"
+  | "done";
 
 export type Project = {
-  id: string;
+  id: number;
   name: string;
   objective: string;
   description: string;
-  status: "active" | "paused" | "done";
-  progress: number;
-  deadline: string;
-  ticketCount: number;
-  dueDate: string;
-  members: {
-    name: string;
-    initials: string;
-    role: string;
-  }[];
+  status: ProjectStatus;
+  deadline: string | null;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TicketAssignee = {
+  id: number;
+  name: string;
+  initials: string;
 };
 
 export type Ticket = {
-  id: string;
+  id: number;
   key: string;
   title: string;
   summary: string;
   status: TicketStatus;
   priority: Priority;
   labels: string[];
-  projectId: string;
-  assignee: {
-    name: string;
-    initials: string;
-  };
-  updatedAt: string;
+  project_id: number;
+  assignee: TicketAssignee | null;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TicketCreate = {
+  title: string;
+  summary: string;
+  status: TicketStatus;
+  priority: Priority;
+  labels: string[];
+  project_id: number;
+  assignee_id: number | null;
+};
+
+export type TicketUpdate = {
+  title?: string;
+  summary?: string;
+  status?: TicketStatus;
+  priority?: Priority;
+  labels?: string[];
+  project_id?: number;
+  assignee_id?: number | null;
 };
 
 export type TicketDraft = {
@@ -42,7 +71,7 @@ export type TicketDraft = {
   summary: string;
   status: TicketStatus;
   priority: Priority;
-  projectId: string;
-  assignee: string;
+  project_id: number;
+  assignee_id: number | null;
   labels: string[];
 };

@@ -39,12 +39,11 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       <div>
-
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">
           Settings
         </h1>
 
-        <p className="mt-2 text-muted-foreground">
+        <p className="mt-2 text-[#A0A0A0]">
           Configure your Leela workspace.
         </p>
       </div>
@@ -59,18 +58,18 @@ export default function SettingsPage() {
               href={section.href}
               className="group"
             >
-              <Card className="h-full cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
+              <Card className="h-full cursor-pointer rounded-[20px] border-[#262626] bg-[#141414] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#3A3A3A] hover:bg-[#181818]">
                 <CardContent className="flex items-start gap-4 p-6">
-                  <div className="rounded-2xl border bg-muted/40 p-3 transition-colors group-hover:bg-primary/10">
+                  <div className="rounded-[16px] border border-[#262626] bg-[#0D0D0D] p-3 text-[#CBFF3D] transition-colors group-hover:bg-[#CBFF3D]/10">
                     <Icon className="h-5 w-5" />
                   </div>
 
                   <div>
-                    <h3 className="font-medium">
+                    <h3 className="font-medium text-white">
                       {section.title}
                     </h3>
 
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-1 text-sm text-[#A0A0A0]">
                       {section.description}
                     </p>
                   </div>

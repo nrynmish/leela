@@ -51,15 +51,23 @@ export function TicketsTable({
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  <AssigneeAvatar
-                    name={ticket.assignee.name}
-                    initials={ticket.assignee.initials}
-                  />
-                  <span className="text-sm">{ticket.assignee.name}</span>
+                  {ticket.assignee ? (
+                    <>
+                      <AssigneeAvatar
+                        name={ticket.assignee.name}
+                        initials={ticket.assignee.initials}
+                      />
+                      <span className="text-sm">{ticket.assignee.name}</span>
+                    </>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      Unassigned
+                    </span>
+                  )}
                 </div>
               </TableCell>
               <TableCell className="text-sm text-muted-foreground">
-                {ticket.updatedAt}
+                {ticket.updated_at}
               </TableCell>
               <TableCell className="text-right">
                 <Button variant="ghost" size="sm" onClick={() => onOpen(ticket)}>

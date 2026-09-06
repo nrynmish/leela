@@ -1,112 +1,244 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
 import { CreateTicketDialog } from "@/components/tickets/create-ticket-dialog";
 import { TicketDetailSheet } from "@/components/tickets/ticket-detail-sheet";
 import { TicketFilters } from "@/components/tickets/ticket-filters";
 import { TicketsBoard } from "@/components/tickets/tickets-board";
 import { TicketsTable } from "@/components/tickets/tickets-table";
-import { projects as projectMockData, tickets as initialTickets } from "@/lib/mock-data";
-import type {Ticket, TicketDraft } from "@/lib/types";
 
-function initialsFromName(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
+import {
+  getProjects,
+  type Project,
+} from "@/lib/projects";
 
-function nextTicketKey(existingTickets: Ticket[]) {
-  const maxNumber = existingTickets.reduce((max, ticket) => {
-    const match = ticket.key.match(/-(\d+)/);
-    const number = match ? Number(match[1]) : 0;
-    return Math.max(max, number);
-  }, 0);
+import {
+  createTicket,
+  getTickets,
+  updateTicket,
+} from "@/lib/tickets";
 
-  return `LEL-${String(maxNumber + 1).padStart(3, "0")}`;
-}
+import { can } from "@/lib/rbac";
+import { useAuthStore } from "@/store/auth-store";
+
+import type {
+  Ticket,
+  TicketDraft,
+} from "@/lib/types";
 
 export default function TicketsPage() {
+  const user = useAuthStore(
+    (state) => state.user,
+  );
+
+  const canCreateTicket = can(
+    user,
+    "ticket:create",
+  );
+
   const [query, setQuery] = useState("");
-  const [view, setView] = useState<"board" | "table">("board");
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
+  const [view, setView] =
+    useState<"board" | "table">("board");
+
+  const [tickets, setTickets] = useState<Ticket[]>(
+    [],
+  );
+
+  const [projects, setProjects] = useState<Project[]>(
+    [],
+  );
+
+  const [selectedTicket, setSelectedTicket] =
+    useState<Ticket | null>(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [ticketData, projectData] =
+        await Promise.all([
+          getTickets(),
+          getProjects(),
+        ]);
+
+      setTickets(ticketData);
+      setProjects(projectData);
+    } catch {
+      setError("Failed to load tickets.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const filteredTickets = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return tickets;
+
+    if (!q) {
+      return tickets;
+    }
 
     return tickets.filter((ticket) => {
       return (
-        ticket.title.toLowerCase().includes(q) ||
-        ticket.key.toLowerCase().includes(q) ||
-        ticket.summary.toLowerCase().includes(q) ||
-        ticket.labels.some((label) => label.toLowerCase().includes(q)) ||
-        ticket.assignee.name.toLowerCase().includes(q)
+        ticket.title
+          .toLowerCase()
+          .includes(q) ||
+        ticket.key
+          .toLowerCase()
+          .includes(q) ||
+        ticket.summary
+          .toLowerCase()
+          .includes(q) ||
+        ticket.labels.some((label) =>
+          label.toLowerCase().includes(q),
+        ) ||
+        ticket.assignee?.name
+          .toLowerCase()
+          .includes(q)
       );
     });
   }, [query, tickets]);
 
-  function handleCreateTicket(ticket: TicketDraft) {
-    setTickets((current) => [
-      {
-        id: crypto.randomUUID(),
-        key: nextTicketKey(current),
-        title: ticket.title,
-        summary: ticket.summary,
-        status: ticket.status,
-        priority: ticket.priority,
-        labels: ticket.labels,
-        projectId: ticket.projectId,
-        assignee: {
-          name: ticket.assignee,
-          initials: initialsFromName(ticket.assignee),
-        },
-        updatedAt: "Just now",
-      },
-      ...current,
-    ]);
+  async function handleCreateTicket(
+    draft: TicketDraft,
+  ) {
+    try {
+      setError(null);
+
+      const created = await createTicket({
+        title: draft.title,
+        summary: draft.summary,
+        status: draft.status,
+        priority: draft.priority,
+        labels: draft.labels,
+        project_id: draft.project_id,
+        assignee_id: draft.assignee_id,
+      });
+
+      setTickets((current) => [
+        created,
+        ...current,
+      ]);
+    } catch {
+      setError("Failed to create ticket.");
+    }
   }
 
-  function handleUpdateTicket(updatedTicket: Ticket) {
-    setTickets((current) =>
-      current.map((ticket) =>
-        ticket.id === updatedTicket.id ? updatedTicket : ticket
-      )
-    );
-    setSelectedTicket(updatedTicket);
+  async function handleUpdateTicket(
+    updatedTicket: Ticket,
+  ) {
+    try {
+      setError(null);
+
+      const updated = await updateTicket(
+        updatedTicket.id,
+        {
+          title: updatedTicket.title,
+          summary: updatedTicket.summary,
+          status: updatedTicket.status,
+          priority: updatedTicket.priority,
+          labels: updatedTicket.labels,
+          project_id: updatedTicket.project_id,
+          assignee_id:
+            updatedTicket.assignee?.id ?? null,
+        },
+      );
+
+      setTickets((current) =>
+        current.map((ticket) =>
+          ticket.id === updated.id
+            ? updated
+            : ticket,
+        ),
+      );
+
+      setSelectedTicket(updated);
+    } catch {
+      setError("Failed to update ticket.");
+    }
   }
+
+  function handleDeleteTicket(
+    ticketId: number,
+  ) {
+    setTickets((current) =>
+      current.filter(
+        (ticket) => ticket.id !== ticketId,
+      ),
+    );
+
+    setSelectedTicket(null);
+  }
+
+  const projectOptions = useMemo(
+    () =>
+      projects.map((project) => ({
+        id: project.id,
+        name: project.name,
+      })),
+    [projects],
+  );
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="space-y-2">
-          <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
+          <Badge
+            variant="secondary"
+            className="w-fit rounded-full px-3 py-1"
+          >
             Ticket workspace
           </Badge>
+
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Tickets</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">
+              Tickets
+            </h1>
+
             <p className="text-muted-foreground">
-              Track engineering work, debugging tasks, and product fixes.
+              Track engineering work, debugging tasks,
+              and product fixes.
             </p>
           </div>
         </div>
 
-        <CreateTicketDialog
-          projects={projectMockData}
-          onCreate={handleCreateTicket}
-        />
+        {canCreateTicket && (
+          <CreateTicketDialog
+            projects={projectOptions}
+            onCreate={handleCreateTicket}
+          />
+        )}
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Ticket workspace</CardTitle>
+          <CardTitle className="text-base">
+            Ticket workspace
+          </CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-5">
@@ -117,17 +249,39 @@ export default function TicketsPage() {
             onViewChange={setView}
           />
 
-          {filteredTickets.length > 0 ? (
+          {loading ? (
+            <div className="flex min-h-[260px] items-center justify-center">
+              <p className="text-sm text-muted-foreground">
+                Loading tickets...
+              </p>
+            </div>
+          ) : error ? (
+            <div className="flex min-h-[260px] items-center justify-center">
+              <p className="text-sm text-destructive">
+                {error}
+              </p>
+            </div>
+          ) : filteredTickets.length > 0 ? (
             view === "board" ? (
-              <TicketsBoard tickets={filteredTickets} onOpen={setSelectedTicket} />
+              <TicketsBoard
+                tickets={filteredTickets}
+                onOpen={setSelectedTicket}
+              />
             ) : (
-              <TicketsTable tickets={filteredTickets} onOpen={setSelectedTicket} />
+              <TicketsTable
+                tickets={filteredTickets}
+                onOpen={setSelectedTicket}
+              />
             )
           ) : (
             <div className="flex min-h-[260px] flex-col items-center justify-center rounded-3xl border border-dashed p-8 text-center">
-              <p className="text-lg font-medium">No tickets found</p>
+              <p className="text-lg font-medium">
+                No tickets found
+              </p>
+
               <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                Try a different search term or clear the current filters.
+                Try a different search term or clear
+                the current filters.
               </p>
             </div>
           )}
@@ -137,12 +291,15 @@ export default function TicketsPage() {
       <TicketDetailSheet
         key={selectedTicket?.id ?? "none"}
         ticket={selectedTicket}
-        projects={projectMockData}
+        projects={projectOptions}
         open={Boolean(selectedTicket)}
         onOpenChange={(open) => {
-          if (!open) setSelectedTicket(null);
+          if (!open) {
+            setSelectedTicket(null);
+          }
         }}
         onSave={handleUpdateTicket}
+        onDelete={handleDeleteTicket}
       />
     </div>
   );

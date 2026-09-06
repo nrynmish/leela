@@ -27,23 +27,6 @@ export function HeadProfile({
             label: "Active Projects",
             value: user.stats.activeProjects,
           },
-          {
-            label: "Members Managed",
-            value: user.headStats?.membersManaged ?? 0,
-          },
-        ]}
-      />
-
-      <ProfileStats
-        items={[
-          {
-            label: "Assigned By Me",
-            value: user.headStats?.ticketsAssignedByMe ?? 0,
-          },
-          {
-            label: "Team Tickets Closed",
-            value: user.headStats?.teamTicketsClosed ?? 0,
-          },
         ]}
       />
 

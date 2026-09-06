@@ -16,29 +16,16 @@ export function AdminProfile({
       <ProfileStats
         items={[
           {
-            label: "Members",
-            value: user.adminStats?.totalMembers ?? 0,
-          },
-          {
-            label: "Heads",
-            value: user.adminStats?.totalHeads ?? 0,
-          },
-          {
             label: "Projects",
-            value: user.adminStats?.totalProjects ?? 0,
+            value: user.stats.activeProjects,
           },
           {
-            label: "Open Tickets",
-            value: user.adminStats?.openTickets ?? 0,
+            label: "Tickets Assigned",
+            value: user.stats.ticketsAssigned,
           },
-        ]}
-      />
-
-      <ProfileStats
-        items={[
           {
-            label: "Closed Tickets",
-            value: user.adminStats?.closedTickets ?? 0,
+            label: "Tickets Completed",
+            value: user.stats.ticketsCompleted,
           },
         ]}
       />

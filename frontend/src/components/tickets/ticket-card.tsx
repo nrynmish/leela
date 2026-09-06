@@ -22,15 +22,19 @@ export function TicketCard({
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <p className="text-xs font-medium text-muted-foreground">{ticket.key}</p>
+              <p className="text-xs font-medium text-muted-foreground">
+                {ticket.key}
+              </p>
               <PriorityBadge priority={ticket.priority} />
             </div>
+
             <button
               onClick={() => onOpen(ticket)}
               className="text-left text-base font-semibold tracking-tight transition-colors hover:text-primary"
             >
               {ticket.title}
             </button>
+
             <p className="line-clamp-2 text-sm text-muted-foreground">
               {ticket.summary}
             </p>
@@ -45,14 +49,32 @@ export function TicketCard({
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <AssigneeAvatar
-              name={ticket.assignee.name}
-              initials={ticket.assignee.initials}
-            />
-            <div className="leading-tight">
-              <p className="text-sm font-medium">{ticket.assignee.name}</p>
-              <p className="text-xs text-muted-foreground">{ticket.updatedAt}</p>
-            </div>
+            {ticket.assignee ? (
+              <>
+                <AssigneeAvatar
+                  name={ticket.assignee.name}
+                  initials={ticket.assignee.initials}
+                />
+
+                <div className="leading-tight">
+                  <p className="text-sm font-medium">
+                    {ticket.assignee.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {ticket.updated_at}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="leading-tight">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Unassigned
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {ticket.updated_at}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-1 text-xs text-muted-foreground">

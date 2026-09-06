@@ -15,6 +15,9 @@ import {
   type Project,
 } from "@/lib/projects";
 
+import { can } from "@/lib/rbac";
+import { useAuthStore } from "@/store/auth-store";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,6 +63,20 @@ export function ProjectDetailSheet({
   onEdit: (project: Project) => void;
   onDeleted: () => void;
 }) {
+  const user = useAuthStore(
+    (state) => state.user,
+  );
+
+  const canEditProject = can(
+    user,
+    "project:edit",
+  );
+
+  const canDeleteProject = can(
+    user,
+    "project:delete",
+  );
+
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,7 +105,10 @@ export function ProjectDetailSheet({
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+    >
       <SheetContent className="w-full sm:max-w-xl">
         {project ? (
           <div className="flex h-full flex-col pt-6">
@@ -102,15 +122,17 @@ export function ProjectDetailSheet({
                     {project.status}
                   </Badge>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(project)}
-                    disabled={deleting}
-                  >
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Edit
-                  </Button>
+                  {canEditProject && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEdit(project)}
+                      disabled={deleting}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit
+                    </Button>
+                  )}
                 </div>
 
                 <SheetTitle className="text-2xl">
@@ -195,19 +217,21 @@ export function ProjectDetailSheet({
               )}
             </div>
 
-            <div className="mt-6 border-t pt-4">
-              <Button
-                variant="destructive"
-                className="w-full"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                {deleting
-                  ? "Deleting..."
-                  : "Delete project"}
-              </Button>
-            </div>
+            {canDeleteProject && (
+              <div className="mt-6 border-t pt-4">
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {deleting
+                    ? "Deleting..."
+                    : "Delete project"}
+                </Button>
+              </div>
+            )}
           </div>
         ) : null}
       </SheetContent>

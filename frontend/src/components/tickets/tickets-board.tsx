@@ -1,7 +1,13 @@
 "use client";
 
 import { Ticket } from "@/lib/types";
-import { ticketStatuses } from "@/lib/mock-data";
+const ticketStatuses = [
+  "backlog",
+  "todo",
+  "in-progress",
+  "review",
+  "done",
+] as const;
 import { TicketCard } from "./ticket-card";
 
 const titles: Record<string, string> = {

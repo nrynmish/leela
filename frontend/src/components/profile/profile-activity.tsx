@@ -8,9 +8,9 @@ export function ProfileActivity({
   activity: ActivityItem[];
 }) {
   return (
-    <Card>
+    <Card className="rounded-[20px] border-[#262626] bg-[#141414]">
       <CardHeader>
-        <CardTitle>
+        <CardTitle className="text-white">
           Recent Activity
         </CardTitle>
       </CardHeader>
@@ -19,13 +19,13 @@ export function ProfileActivity({
         {activity.map((item) => (
           <div
             key={item.id}
-            className="border-l pl-4"
+            className="border-l border-[#262626] pl-4"
           >
-            <p className="text-sm">
+            <p className="text-sm text-white">
               {item.action}
             </p>
 
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[#A0A0A0]">
               {item.timestamp}
             </p>
           </div>

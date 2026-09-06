@@ -1,10 +1,5 @@
 import type { User } from "@/types/auth";
 
-export type UserRole =
-  | "member"
-  | "head"
-  | "admin";
-
 export type ActivityItem = {
   id: string;
   action: string;
@@ -17,33 +12,7 @@ export type ProfileStats = {
   activeProjects: number;
 };
 
-export type HeadStats = {
-  ticketsAssignedByMe: number;
-  membersManaged: number;
-  teamTicketsClosed: number;
-};
-
-export type AdminStats = {
-  totalMembers: number;
-  totalHeads: number;
-  totalProjects: number;
-  openTickets: number;
-  closedTickets: number;
-};
-
-export type ProfileExtras = {
-  avatar?: string;
-
-  skills: string[];
-
+export type CompleteProfile = User & {
   stats: ProfileStats;
-
-  headStats?: HeadStats;
-
-  adminStats?: AdminStats;
-
   activity: ActivityItem[];
 };
-
-export type CompleteProfile =
-  User & ProfileExtras;

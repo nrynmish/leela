@@ -3,6 +3,7 @@ import { ProfileHeader } from "./profile-header";
 import { ProfileStats } from "./profile-stats";
 
 import type { CompleteProfile } from "@/lib/profile-types";
+
 export function MemberProfile({
   user,
 }: {

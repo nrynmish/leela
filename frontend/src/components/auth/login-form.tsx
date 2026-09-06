@@ -48,44 +48,43 @@ export function LoginForm() {
   }
 
   return (
-    <div className="flex w-full max-w-7xl overflow-hidden rounded-3xl border bg-card shadow-2xl">
-      <div className="hidden w-1/2 border-r bg-gradient-to-br from-background via-background to-muted/20 p-12 lg:flex lg:flex-col lg:justify-between">
+    <div className="flex w-full max-w-7xl overflow-hidden rounded-[28px] border border-[#262626] bg-[#0D0D0D]">
+      <div className="hidden w-1/2 border-r border-[#262626] bg-[radial-gradient(circle_at_top_left,rgba(203,255,61,0.11),transparent_25%),linear-gradient(135deg,#0D0D0D_0%,#11150B_100%)] p-12 lg:flex lg:flex-col lg:justify-between">
         <div>
-          <h1 className="text-5xl font-black tracking-tight text-primary">
+          <h1 className="text-5xl font-black tracking-tight text-[#CBFF3D]">
             LEELA
           </h1>
 
-          <p className="mt-2 text-lg text-muted-foreground">
+          <p className="mt-2 text-lg text-[#A0A0A0]">
             UGV-DTU
           </p>
         </div>
 
         <div className="max-w-md">
-          <h2 className="text-5xl font-bold leading-tight">
+          <h2 className="text-5xl font-bold leading-tight text-white">
             Plan. Build. Track.
             <br />
-            <span className="text-primary">
+            <span className="text-[#CBFF3D]">
               Ship Together.
             </span>
           </h2>
 
-          <p className="mt-8 text-xl text-muted-foreground">
+          <p className="mt-8 text-xl text-[#A0A0A0]">
             Leela helps engineering teams
             plan projects, track progress,
             manage tickets, and ship
             better together.
           </p>
         </div>
-
       </div>
 
       <div className="flex w-full items-center justify-center p-10 lg:w-1/2 lg:p-16">
         <div className="w-full max-w-md">
-          <h2 className="text-5xl font-bold">
+          <h2 className="text-5xl font-bold text-white">
             Welcome back
           </h2>
 
-          <p className="mt-4 text-lg text-muted-foreground">
+          <p className="mt-4 text-lg text-[#A0A0A0]">
             Sign in to your Leela account
           </p>
 
@@ -94,7 +93,7 @@ export function LoginForm() {
             className="mt-10 space-y-6"
           >
             <div>
-              <label className="mb-2 block text-sm font-medium">
+              <label className="mb-2 block text-sm font-medium text-white">
                 Roll Number
               </label>
 
@@ -108,7 +107,7 @@ export function LoginForm() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium">
+              <label className="mb-2 block text-sm font-medium text-white">
                 Password
               </label>
 
@@ -125,7 +124,7 @@ export function LoginForm() {
             </div>
 
             {error && (
-              <p className="text-sm text-red-500">
+              <p className="text-sm text-red-400">
                 {error}
               </p>
             )}

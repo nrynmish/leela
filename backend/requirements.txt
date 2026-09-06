@@ -12,3 +12,6 @@ python-dotenv
 pydantic-settings
 
 email-validator
+
+pytest
+httpx

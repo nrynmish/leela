@@ -2,7 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_user
+from app.api.dependencies import (
+    get_current_user,
+    require_roles,
+)
+from app.core.enums import UserRole
 from app.db.database import get_db
 from app.models.project import Project
 from app.models.user import User
@@ -27,7 +31,12 @@ router = APIRouter(
 def create_project(
     payload: ProjectCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(
+        require_roles(
+            UserRole.ADMIN,
+            UserRole.HEAD,
+        )
+    ),
 ):
     project = Project(
         name=payload.name,
@@ -53,7 +62,9 @@ def get_projects(
     current_user: User = Depends(get_current_user),
 ):
     projects = db.scalars(
-        select(Project).order_by(Project.created_at.desc())
+        select(Project).order_by(
+            Project.created_at.desc()
+        )
     ).all()
 
     return projects
@@ -68,7 +79,10 @@ def get_project(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    project = db.get(Project, project_id)
+    project = db.get(
+        Project,
+        project_id,
+    )
 
     if not project:
         raise HTTPException(
@@ -87,9 +101,17 @@ def update_project(
     project_id: int,
     payload: ProjectUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(
+        require_roles(
+            UserRole.ADMIN,
+            UserRole.HEAD,
+        )
+    ),
 ):
-    project = db.get(Project, project_id)
+    project = db.get(
+        Project,
+        project_id,
+    )
 
     if not project:
         raise HTTPException(
@@ -97,10 +119,16 @@ def update_project(
             detail="Project not found",
         )
 
-    updates = payload.model_dump(exclude_unset=True)
+    updates = payload.model_dump(
+        exclude_unset=True
+    )
 
     for field, value in updates.items():
-        setattr(project, field, value)
+        setattr(
+            project,
+            field,
+            value,
+        )
 
     db.commit()
     db.refresh(project)
@@ -115,9 +143,14 @@ def update_project(
 def delete_project(
     project_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(
+        require_roles(UserRole.ADMIN)
+    ),
 ):
-    project = db.get(Project, project_id)
+    project = db.get(
+        Project,
+        project_id,
+    )
 
     if not project:
         raise HTTPException(

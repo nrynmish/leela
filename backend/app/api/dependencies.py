@@ -1,9 +1,8 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials
-from fastapi.security import HTTPBearer
-
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from app.core.enums import UserRole
 from app.db.database import get_db
 from app.models.user import User
 from app.services.security import decode_token
@@ -48,3 +47,18 @@ def get_current_user(
         )
 
     return user
+
+
+def require_roles(*roles: UserRole):
+    def role_checker(
+        current_user: User = Depends(get_current_user),
+    ) -> User:
+        if current_user.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
+
+        return current_user
+
+    return role_checker

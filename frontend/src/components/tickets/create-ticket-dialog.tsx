@@ -21,10 +21,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Priority, TicketDraft, TicketStatus } from "@/lib/types";
+
+import type {
+  Priority,
+  TicketDraft,
+  TicketStatus,
+} from "@/lib/types";
 
 type ProjectOption = {
-  id: string;
+  id: number;
   name: string;
 };
 
@@ -33,8 +38,8 @@ type CreateTicketForm = {
   summary: string;
   status: TicketStatus;
   priority: Priority;
-  projectId: string;
-  assignee: string;
+  project_id: number | "";
+  assignee_id: number | null;
   labels: string;
 };
 
@@ -46,25 +51,23 @@ const statusOptions: TicketStatus[] = [
   "done",
 ];
 
-const priorityOptions: Priority[] = ["low", "medium", "high", "urgent"];
-
-const assigneeOptions = ["Aarav", "Meera", "Kabir", "Isha", "Rohan", "Dev"];
-
-type CreateTicketDialogProps = {
-  projects: ProjectOption[];
-  onCreate: (ticket: TicketDraft) => void;
-};
+const priorityOptions: Priority[] = [
+  "low",
+  "medium",
+  "high",
+  "urgent",
+];
 
 function buildInitialState(
-  projects: ProjectOption[]
+  projects: ProjectOption[],
 ): CreateTicketForm {
   return {
     title: "",
     summary: "",
     status: "todo",
     priority: "medium",
-    projectId: projects[0]?.id ?? "",
-    assignee: assigneeOptions[0] ?? "",
+    project_id: projects[0]?.id ?? "",
+    assignee_id: null,
     labels: "",
   };
 }
@@ -72,12 +75,19 @@ function buildInitialState(
 export function CreateTicketDialog({
   projects,
   onCreate,
-}: CreateTicketDialogProps) {
+}: {
+  projects: ProjectOption[];
+  onCreate: (ticket: TicketDraft) => void;
+}) {
   const [open, setOpen] = React.useState(false);
-  const [form, setForm] = React.useState<CreateTicketForm>(() =>
-    buildInitialState(projects)
-  );
-  const [error, setError] = React.useState<string | null>(null);
+
+  const [form, setForm] =
+    React.useState<CreateTicketForm>(() =>
+      buildInitialState(projects),
+    );
+
+  const [error, setError] =
+    React.useState<string | null>(null);
 
   function resetForm() {
     setForm(buildInitialState(projects));
@@ -86,6 +96,7 @@ export function CreateTicketDialog({
 
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
+
     if (!nextOpen) {
       resetForm();
     }
@@ -96,14 +107,22 @@ export function CreateTicketDialog({
     setOpen(true);
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>,
+  ) {
     e.preventDefault();
 
     const title = form.title.trim();
     const summary = form.summary.trim();
 
-    if (!title || !summary || !form.projectId) {
-      setError("Please fill in the title, summary, and project.");
+    if (
+      !title ||
+      !summary ||
+      form.project_id === ""
+    ) {
+      setError(
+        "Please fill in the title, summary, and project.",
+      );
       return;
     }
 
@@ -112,8 +131,8 @@ export function CreateTicketDialog({
       summary,
       status: form.status,
       priority: form.priority,
-      projectId: form.projectId,
-      assignee: form.assignee,
+      project_id: form.project_id,
+      assignee_id: form.assignee_id,
       labels: form.labels
         .split(",")
         .map((label) => label.trim())
@@ -125,23 +144,38 @@ export function CreateTicketDialog({
 
   return (
     <>
-      <Button className="rounded-full" onClick={handleCreateClick}>
+      <Button
+        className="rounded-full"
+        onClick={handleCreateClick}
+      >
         <Plus className="mr-2 h-4 w-4" />
         New Ticket
       </Button>
 
-      <Dialog open={open} onOpenChange={handleOpenChange}>
+      <Dialog
+        open={open}
+        onOpenChange={handleOpenChange}
+      >
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Create ticket</DialogTitle>
+            <DialogTitle>
+              Create ticket
+            </DialogTitle>
+
             <DialogDescription>
-              Add a new issue to the workspace. This is local-only for now.
+              Add a new issue to the workspace.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-5"
+          >
             <div className="space-y-2">
-              <label className="text-sm font-medium">Title</label>
+              <label className="text-sm font-medium">
+                Title
+              </label>
+
               <Input
                 value={form.title}
                 onChange={(e) =>
@@ -155,7 +189,10 @@ export function CreateTicketDialog({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Summary</label>
+              <label className="text-sm font-medium">
+                Summary
+              </label>
+
               <Textarea
                 value={form.summary}
                 onChange={(e) =>
@@ -171,22 +208,33 @@ export function CreateTicketDialog({
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Project</label>
+                <label className="text-sm font-medium">
+                  Project
+                </label>
+
                 <Select
-                  value={form.projectId}
+                  value={
+                    form.project_id === ""
+                      ? undefined
+                      : String(form.project_id)
+                  }
                   onValueChange={(value) =>
                     setForm((current) => ({
                       ...current,
-                      projectId: value ?? "",
+                      project_id: Number(value),
                     }))
                   }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select project" />
                   </SelectTrigger>
+
                   <SelectContent>
                     {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
+                      <SelectItem
+                        key={project.id}
+                        value={String(project.id)}
+                      >
                         {project.name}
                       </SelectItem>
                     ))}
@@ -195,31 +243,36 @@ export function CreateTicketDialog({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Assignee</label>
+                <label className="text-sm font-medium">
+                  Assignee
+                </label>
+
                 <Select
-                  value={form.assignee}
-                  onValueChange={(value) =>
+                  value="unassigned"
+                  onValueChange={() =>
                     setForm((current) => ({
                       ...current,
-                      assignee: value ?? "",
+                      assignee_id: null,
                     }))
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select assignee" />
+                    <SelectValue />
                   </SelectTrigger>
+
                   <SelectContent>
-                    {assigneeOptions.map((name) => (
-                      <SelectItem key={name} value={name}>
-                        {name}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="unassigned">
+                      Unassigned
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
+                <label className="text-sm font-medium">
+                  Status
+                </label>
+
                 <Select
                   value={form.status}
                   onValueChange={(value) =>
@@ -230,11 +283,15 @@ export function CreateTicketDialog({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue />
                   </SelectTrigger>
+
                   <SelectContent>
                     {statusOptions.map((status) => (
-                      <SelectItem key={status} value={status}>
+                      <SelectItem
+                        key={status}
+                        value={status}
+                      >
                         {status}
                       </SelectItem>
                     ))}
@@ -243,7 +300,10 @@ export function CreateTicketDialog({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Priority</label>
+                <label className="text-sm font-medium">
+                  Priority
+                </label>
+
                 <Select
                   value={form.priority}
                   onValueChange={(value) =>
@@ -254,21 +314,30 @@ export function CreateTicketDialog({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
+                    <SelectValue />
                   </SelectTrigger>
+
                   <SelectContent>
-                    {priorityOptions.map((priority) => (
-                      <SelectItem key={priority} value={priority}>
-                        {priority}
-                      </SelectItem>
-                    ))}
+                    {priorityOptions.map(
+                      (priority) => (
+                        <SelectItem
+                          key={priority}
+                          value={priority}
+                        >
+                          {priority}
+                        </SelectItem>
+                      ),
+                    )}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Labels</label>
+              <label className="text-sm font-medium">
+                Labels
+              </label>
+
               <Input
                 value={form.labels}
                 onChange={(e) =>
@@ -279,6 +348,7 @@ export function CreateTicketDialog({
                 }
                 placeholder="UI, Robotics, Debugging"
               />
+
               <p className="text-xs text-muted-foreground">
                 Separate labels with commas.
               </p>
@@ -294,11 +364,16 @@ export function CreateTicketDialog({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => handleOpenChange(false)}
+                onClick={() =>
+                  handleOpenChange(false)
+                }
               >
                 Cancel
               </Button>
-              <Button type="submit">Create Ticket</Button>
+
+              <Button type="submit">
+                Create Ticket
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

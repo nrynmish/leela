@@ -1,16 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, Plus } from "lucide-react";
-
-import {
-  getProjects,
-  type Project,
-} from "@/lib/projects";
-
-import { ProjectCard } from "@/components/projects/project-card";
-import { ProjectDetailSheet } from "@/components/projects/project-detail-sheet";
-import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
+import { Plus, Search } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,13 +18,36 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 
+import { ProjectCard } from "@/components/projects/project-card";
+import { ProjectDetailSheet } from "@/components/projects/project-detail-sheet";
+import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
+
+import {
+  getProjects,
+  type Project,
+} from "@/lib/projects";
+
+import { can } from "@/lib/rbac";
+import { useAuthStore } from "@/store/auth-store";
+
 type Filter = "all" | Project["status"];
 
 export default function ProjectsPage() {
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
+  const user = useAuthStore(
+    (state) => state.user,
+  );
 
-  const [createOpen, setCreateOpen] = useState(false);
+  const canCreateProject = can(
+    user,
+    "project:create",
+  );
+
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] =
+    useState<Filter>("all");
+
+  const [createOpen, setCreateOpen] =
+    useState(false);
 
   const [editProject, setEditProject] =
     useState<Project | null>(null);
@@ -75,8 +89,12 @@ export default function ProjectsPage() {
       const matchesQuery =
         !q ||
         project.name.toLowerCase().includes(q) ||
-        project.description.toLowerCase().includes(q) ||
-        project.objective.toLowerCase().includes(q);
+        project.description
+          .toLowerCase()
+          .includes(q) ||
+        project.objective
+          .toLowerCase()
+          .includes(q);
 
       const matchesFilter =
         filter === "all"
@@ -88,20 +106,41 @@ export default function ProjectsPage() {
   }, [projects, query, filter]);
 
   const activeCount = projects.filter(
-    (project) => project.status === "active",
+    (project) =>
+      project.status === "active",
   ).length;
 
   const pausedCount = projects.filter(
-    (project) => project.status === "paused",
+    (project) =>
+      project.status === "paused",
   ).length;
 
   const doneCount = projects.filter(
-    (project) => project.status === "done",
+    (project) =>
+      project.status === "done",
   ).length;
 
   function handleEdit(project: Project) {
     setSelectedProject(null);
     setEditProject(project);
+  }
+
+  function handleCreateOpen(
+    open: boolean,
+  ) {
+    setCreateOpen(open);
+
+    if (!open) {
+      setEditProject(null);
+    }
+  }
+
+  function handleEditOpen(
+    open: boolean,
+  ) {
+    if (!open) {
+      setEditProject(null);
+    }
   }
 
   return (
@@ -126,13 +165,15 @@ export default function ProjectsPage() {
           </div>
         </div>
 
-        <Button
-          className="rounded-full"
-          onClick={() => setCreateOpen(true)}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          New project
-        </Button>
+        {canCreateProject && (
+          <Button
+            className="rounded-full"
+            onClick={() => setCreateOpen(true)}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            New project
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -187,7 +228,9 @@ export default function ProjectsPage() {
 
               <Input
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) =>
+                  setQuery(e.target.value)
+                }
                 placeholder="Search projects..."
                 className="pl-9"
               />
@@ -233,13 +276,15 @@ export default function ProjectsPage() {
             </div>
           ) : filteredProjects.length > 0 ? (
             <div className="grid gap-4 lg:grid-cols-3">
-              {filteredProjects.map((project) => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  onOpen={setSelectedProject}
-                />
-              ))}
+              {filteredProjects.map(
+                (project) => (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    onOpen={setSelectedProject}
+                  />
+                ),
+              )}
             </div>
           ) : (
             <div className="flex min-h-[280px] flex-col items-center justify-center rounded-3xl border border-dashed p-8 text-center">
@@ -263,33 +308,26 @@ export default function ProjectsPage() {
             setSelectedProject(null);
           }
         }}
-        onEdit={(project) => {
-            setSelectedProject(null);
-            setEditProject(project);
-          }}
+        onEdit={handleEdit}
         onDeleted={loadProjects}
       />
 
       <CreateProjectDialog
-        open={createOpen}
+        open={
+          createOpen || Boolean(editProject)
+        }
         onOpenChange={(open) => {
           if (!open) {
-            setEditProject(null);
-          }
-        }}
-        project={editProject}    
-        onSaved={loadProjects}
-      />
-
-      <CreateProjectDialog
-        open={Boolean(editProject)}
-        onOpenChange={(open) => {
-          if (!open) {
+            setCreateOpen(false);
             setEditProject(null);
           }
         }}
         project={editProject}
-        onSaved={loadProjects}
+        onSaved={() => {
+          setCreateOpen(false);
+          setEditProject(null);
+          loadProjects();
+        }}
       />
     </div>
   );
