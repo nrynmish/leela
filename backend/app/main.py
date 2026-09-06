@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import Base, engine
@@ -19,9 +20,15 @@ app.include_router(users_router)
 app.include_router(projects_router)
 app.include_router(tickets_router)
 
+frontend_url = os.getenv(
+    "FRONTEND_URL",
+    "http://localhost:3000",
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        frontend_url,
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ],
