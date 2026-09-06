@@ -149,17 +149,17 @@ export default function ProjectsPage() {
         <div className="space-y-2">
           <Badge
             variant="secondary"
-            className="w-fit rounded-full px-3 py-1"
+            className="w-fit rounded-full border-[#262626] bg-[#141414] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#A0A0A0]"
           >
             Project workspace
           </Badge>
 
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">
+            <h1 className="text-3xl font-semibold tracking-[-0.04em] text-white">
               Projects
             </h1>
 
-            <p className="text-muted-foreground">
+            <p className="text-[#A0A0A0]">
               Track execution, members, and progress across active work.
             </p>
           </div>
@@ -177,54 +177,54 @@ export default function ProjectsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="rounded-[20px] border-[#262626] bg-[#141414]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-[#A0A0A0]">
               Active
             </CardTitle>
           </CardHeader>
 
           <CardContent>
-            <p className="text-3xl font-semibold">
+            <p className="text-3xl font-semibold text-white">
               {activeCount}
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-[20px] border-[#262626] bg-[#141414]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-[#A0A0A0]">
               Paused
             </CardTitle>
           </CardHeader>
 
           <CardContent>
-            <p className="text-3xl font-semibold">
+            <p className="text-3xl font-semibold text-white">
               {pausedCount}
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-[20px] border-[#262626] bg-[#141414]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-[#A0A0A0]">
               Completed
             </CardTitle>
           </CardHeader>
 
           <CardContent>
-            <p className="text-3xl font-semibold">
+            <p className="text-3xl font-semibold text-white">
               {doneCount}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
+      <Card className="rounded-[20px] border-[#262626] bg-[#141414]">
         <CardContent className="space-y-5 p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="relative w-full lg:max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#666]" />
 
               <Input
                 value={query}
@@ -263,14 +263,14 @@ export default function ProjectsPage() {
           </div>
 
           {loading ? (
-            <div className="flex min-h-[280px] items-center justify-center">
-              <p className="text-sm text-muted-foreground">
+            <div className="flex min-h-[280px] items-center justify-center rounded-[20px] border border-[#262626] bg-[#0D0D0D]">
+              <p className="text-sm text-[#A0A0A0]">
                 Loading projects...
               </p>
             </div>
           ) : error ? (
-            <div className="flex min-h-[280px] items-center justify-center">
-              <p className="text-sm text-destructive">
+            <div className="flex min-h-[280px] items-center justify-center rounded-[20px] border border-red-500/20 bg-red-500/5">
+              <p className="text-sm text-red-400">
                 {error}
               </p>
             </div>
@@ -287,12 +287,12 @@ export default function ProjectsPage() {
               )}
             </div>
           ) : (
-            <div className="flex min-h-[280px] flex-col items-center justify-center rounded-3xl border border-dashed p-8 text-center">
-              <p className="text-lg font-medium">
+            <div className="flex min-h-[280px] flex-col items-center justify-center rounded-[20px] border border-dashed border-[#303030] bg-[#0D0D0D] p-8 text-center">
+              <p className="text-lg font-medium text-white">
                 No projects found
               </p>
 
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              <p className="mt-1 max-w-sm text-sm text-[#A0A0A0]">
                 Try a different search term or switch the status filter.
               </p>
             </div>

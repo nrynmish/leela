@@ -209,17 +209,17 @@ export default function TicketsPage() {
         <div className="space-y-2">
           <Badge
             variant="secondary"
-            className="w-fit rounded-full px-3 py-1"
+            className="w-fit rounded-full border-[#262626] bg-[#141414] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#A0A0A0]"
           >
             Ticket workspace
           </Badge>
 
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">
+            <h1 className="text-3xl font-semibold tracking-[-0.04em] text-white">
               Tickets
             </h1>
 
-            <p className="text-muted-foreground">
+            <p className="text-[#A0A0A0]">
               Track engineering work, debugging tasks,
               and product fixes.
             </p>
@@ -234,9 +234,9 @@ export default function TicketsPage() {
         )}
       </div>
 
-      <Card>
+      <Card className="rounded-[20px] border-[#262626] bg-[#141414]">
         <CardHeader>
-          <CardTitle className="text-base">
+          <CardTitle className="text-base text-white">
             Ticket workspace
           </CardTitle>
         </CardHeader>
@@ -250,14 +250,14 @@ export default function TicketsPage() {
           />
 
           {loading ? (
-            <div className="flex min-h-[260px] items-center justify-center">
-              <p className="text-sm text-muted-foreground">
+            <div className="flex min-h-[260px] items-center justify-center rounded-[20px] border border-[#262626] bg-[#0D0D0D]">
+              <p className="text-sm text-[#A0A0A0]">
                 Loading tickets...
               </p>
             </div>
           ) : error ? (
-            <div className="flex min-h-[260px] items-center justify-center">
-              <p className="text-sm text-destructive">
+            <div className="flex min-h-[260px] items-center justify-center rounded-[20px] border border-red-500/20 bg-red-500/5">
+              <p className="text-sm text-red-400">
                 {error}
               </p>
             </div>
@@ -274,12 +274,12 @@ export default function TicketsPage() {
               />
             )
           ) : (
-            <div className="flex min-h-[260px] flex-col items-center justify-center rounded-3xl border border-dashed p-8 text-center">
-              <p className="text-lg font-medium">
+            <div className="flex min-h-[260px] flex-col items-center justify-center rounded-[20px] border border-dashed border-[#303030] bg-[#0D0D0D] p-8 text-center">
+              <p className="text-lg font-medium text-white">
                 No tickets found
               </p>
 
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              <p className="mt-1 max-w-sm text-sm text-[#A0A0A0]">
                 Try a different search term or clear
                 the current filters.
               </p>

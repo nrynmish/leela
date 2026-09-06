@@ -17,43 +17,43 @@ export function ProjectMetadata({
 }) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <Card>
+      <Card className="rounded-[20px] border-[#262626] bg-[#141414]">
         <CardContent className="p-6">
-          <FolderKanban className="mb-3 h-5 w-5 text-muted-foreground" />
+          <FolderKanban className="mb-3 h-5 w-5 text-[#CBFF3D]" />
 
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-[#A0A0A0]">
             Status
           </p>
 
-          <p className="mt-2 text-3xl font-semibold capitalize">
+          <p className="mt-2 text-3xl font-semibold capitalize text-white">
             {status}
           </p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="rounded-[20px] border-[#262626] bg-[#141414]">
         <CardContent className="p-6">
-          <CheckCircle2 className="mb-3 h-5 w-5 text-muted-foreground" />
+          <CheckCircle2 className="mb-3 h-5 w-5 text-[#CBFF3D]" />
 
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-[#A0A0A0]">
             Created By
           </p>
 
-          <p className="mt-2 text-3xl font-semibold">
+          <p className="mt-2 text-3xl font-semibold text-white">
             #{createdBy}
           </p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="rounded-[20px] border-[#262626] bg-[#141414]">
         <CardContent className="p-6">
-          <CalendarDays className="mb-3 h-5 w-5 text-muted-foreground" />
+          <CalendarDays className="mb-3 h-5 w-5 text-[#CBFF3D]" />
 
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-[#A0A0A0]">
             Deadline
           </p>
 
-          <p className="mt-2 text-lg font-medium">
+          <p className="mt-2 text-lg font-medium text-white">
             {deadline
               ? new Date(deadline).toLocaleDateString()
               : "No deadline"}

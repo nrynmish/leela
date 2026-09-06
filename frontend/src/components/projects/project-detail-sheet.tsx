@@ -39,13 +39,13 @@ function MetricCard({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border p-4">
-      <div className="mb-2 flex items-center gap-2 text-muted-foreground">
-        <Icon className="h-4 w-4" />
+    <div className="rounded-[18px] border border-[#262626] bg-[#141414] p-4">
+      <div className="mb-2 flex items-center gap-2 text-[#A0A0A0]">
+        <Icon className="h-4 w-4 text-[#CBFF3D]" />
         <span className="text-sm">{label}</span>
       </div>
 
-      <p className="text-lg font-semibold">{value}</p>
+      <p className="text-lg font-semibold text-white">{value}</p>
     </div>
   );
 }
@@ -135,11 +135,11 @@ export function ProjectDetailSheet({
                   )}
                 </div>
 
-                <SheetTitle className="text-2xl">
+                <SheetTitle className="text-2xl text-white">
                   {project.name}
                 </SheetTitle>
 
-                <SheetDescription>
+                <SheetDescription className="text-[#A0A0A0]">
                   {project.description}
                 </SheetDescription>
               </SheetHeader>
@@ -179,31 +179,31 @@ export function ProjectDetailSheet({
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium">
+                <p className="text-sm font-medium text-white">
                   Objective
                 </p>
 
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-[#A0A0A0]">
                   {project.objective}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium">
+                <p className="text-sm font-medium text-white">
                   Description
                 </p>
 
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-[#A0A0A0]">
                   {project.description}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium">
+                <p className="text-sm font-medium text-white">
                   Created
                 </p>
 
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-[#A0A0A0]">
                   {new Date(
                     project.created_at,
                   ).toLocaleString()}

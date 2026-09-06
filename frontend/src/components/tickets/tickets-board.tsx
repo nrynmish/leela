@@ -31,10 +31,10 @@ export function TicketsBoard({
         const columnTickets = tickets.filter((ticket) => ticket.status === status);
 
         return (
-          <div key={status} className="space-y-3 rounded-3xl border bg-muted/20 p-3">
+          <div key={status} className="space-y-3 rounded-[20px] border border-[#262626] bg-[#0D0D0D] p-3">
             <div className="flex items-center justify-between px-1">
-              <h3 className="text-sm font-semibold">{titles[status]}</h3>
-              <span className="text-xs text-muted-foreground">{columnTickets.length}</span>
+              <h3 className="text-sm font-semibold text-white">{titles[status]}</h3>
+              <span className="rounded-full border border-[#262626] bg-[#141414] px-2 py-0.5 text-[10px] font-medium text-[#A0A0A0]">{columnTickets.length}</span>
             </div>
 
             <div className="space-y-3">

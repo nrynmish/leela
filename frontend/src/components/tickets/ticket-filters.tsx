@@ -19,7 +19,7 @@ export function TicketFilters({
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       <div className="relative w-full lg:max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#666]" />
         <Input
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}

@@ -22,25 +22,25 @@ export function TicketsTable({
   onOpen: (ticket: Ticket) => void;
 }) {
   return (
-    <div className="rounded-3xl border bg-background shadow-sm">
+    <div className="rounded-[20px] border border-[#262626] bg-[#0D0D0D] shadow-none">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Ticket</TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Labels</TableHead>
-            <TableHead>Assignee</TableHead>
-            <TableHead>Updated</TableHead>
-            <TableHead />
+          <TableRow className="border-[#262626] bg-[#141414] hover:bg-[#141414]">
+            <TableHead className="text-[#A0A0A0]">Ticket</TableHead>
+            <TableHead className="text-[#A0A0A0]">Priority</TableHead>
+            <TableHead className="text-[#A0A0A0]">Labels</TableHead>
+            <TableHead className="text-[#A0A0A0]">Assignee</TableHead>
+            <TableHead className="text-[#A0A0A0]">Updated</TableHead>
+            <TableHead className="text-right text-[#A0A0A0]" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {tickets.map((ticket) => (
-            <TableRow key={ticket.id}>
+            <TableRow key={ticket.id} className="border-[#262626] hover:bg-[#141414]">
               <TableCell>
                 <div className="space-y-1">
-                  <p className="font-medium">{ticket.key}</p>
-                  <p className="text-sm text-muted-foreground">{ticket.title}</p>
+                  <p className="font-medium text-white">{ticket.key}</p>
+                  <p className="text-sm text-[#A0A0A0]">{ticket.title}</p>
                 </div>
               </TableCell>
               <TableCell>
@@ -57,20 +57,20 @@ export function TicketsTable({
                         name={ticket.assignee.name}
                         initials={ticket.assignee.initials}
                       />
-                      <span className="text-sm">{ticket.assignee.name}</span>
+                      <span className="text-sm text-white">{ticket.assignee.name}</span>
                     </>
                   ) : (
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-[#A0A0A0]">
                       Unassigned
                     </span>
                   )}
                 </div>
               </TableCell>
-              <TableCell className="text-sm text-muted-foreground">
+              <TableCell className="text-sm text-[#A0A0A0]">
                 {ticket.updated_at}
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="sm" onClick={() => onOpen(ticket)}>
+                <Button variant="ghost" size="sm" onClick={() => onOpen(ticket)} className="rounded-full text-[#A0A0A0] hover:bg-[#1A1A1A] hover:text-white">
                   Open
                 </Button>
               </TableCell>
