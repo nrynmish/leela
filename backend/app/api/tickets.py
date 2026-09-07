@@ -92,7 +92,10 @@ def can_assign(assigner: User, assignee: User) -> bool:
     if assigner.role == UserRole.ADMIN:
         return assignee.role in (UserRole.HEAD, UserRole.MEMBER)
     if assigner.role == UserRole.HEAD:
-        return assignee.role == UserRole.MEMBER
+        return (
+            assignee.role == UserRole.MEMBER
+            and assignee.department == assigner.department
+        )
     return False
 
 @router.get(

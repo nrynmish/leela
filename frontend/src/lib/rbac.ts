@@ -70,7 +70,11 @@ export function can(
 }
 
 export function canAssign(assigner: User, assignee: User): boolean {
-  if (assigner.role === "admin") return assignee.role === "head" || assignee.role === "member";
-  if (assigner.role === "head") return assignee.role === "member";
+  if (assigner.role === "admin") {
+    return assignee.role === "head" || assignee.role === "member";
+  }
+  if (assigner.role === "head") {
+    return assignee.role === "member" && assignee.department === assigner.department;
+  }
   return false;
 }
