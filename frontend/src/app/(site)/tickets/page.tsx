@@ -7,6 +7,9 @@ import {
   useState,
 } from "react";
 
+import { getUsers } from "@/lib/users";
+import type { User } from "@/types/auth";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -21,69 +24,46 @@ import { TicketFilters } from "@/components/tickets/ticket-filters";
 import { TicketsBoard } from "@/components/tickets/tickets-board";
 import { TicketsTable } from "@/components/tickets/tickets-table";
 
-import {
-  getProjects,
-  type Project,
-} from "@/lib/projects";
+import { getProjects, type Project } from "@/lib/projects";
 
-import {
-  createTicket,
-  getTickets,
-  updateTicket,
-} from "@/lib/tickets";
+import { createTicket, getTickets, updateTicket } from "@/lib/tickets";
 
 import { can } from "@/lib/rbac";
 import { useAuthStore } from "@/store/auth-store";
 
-import type {
-  Ticket,
-  TicketDraft,
-} from "@/lib/types";
+import type { Ticket, TicketDraft } from "@/lib/types";
 
 export default function TicketsPage() {
-  const user = useAuthStore(
-    (state) => state.user,
-  );
+  const user = useAuthStore((state) => state.user);
 
-  const canCreateTicket = can(
-    user,
-    "ticket:create",
-  );
+  const canCreateTicket = can(user, "ticket:create");
 
   const [query, setQuery] = useState("");
-  const [view, setView] =
-    useState<"board" | "table">("board");
+  const [view, setView] = useState<"board" | "table">("board");
 
-  const [tickets, setTickets] = useState<Ticket[]>(
-    [],
-  );
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
 
-  const [projects, setProjects] = useState<Project[]>(
-    [],
-  );
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 
-  const [selectedTicket, setSelectedTicket] =
-    useState<Ticket | null>(null);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const [ticketData, projectData] =
-        await Promise.all([
-          getTickets(),
-          getProjects(),
-        ]);
+      const [ticketData, projectData, userData] = await Promise.all([
+        getTickets(),
+        getProjects(),
+        getUsers(),
+      ]);
 
       setTickets(ticketData);
       setProjects(projectData);
+      setUsers(userData);
     } catch {
       setError("Failed to load tickets.");
     } finally {
@@ -104,28 +84,16 @@ export default function TicketsPage() {
 
     return tickets.filter((ticket) => {
       return (
-        ticket.title
-          .toLowerCase()
-          .includes(q) ||
-        ticket.key
-          .toLowerCase()
-          .includes(q) ||
-        ticket.summary
-          .toLowerCase()
-          .includes(q) ||
-        ticket.labels.some((label) =>
-          label.toLowerCase().includes(q),
-        ) ||
-        ticket.assignee?.name
-          .toLowerCase()
-          .includes(q)
+        ticket.title.toLowerCase().includes(q) ||
+        ticket.key.toLowerCase().includes(q) ||
+        ticket.summary.toLowerCase().includes(q) ||
+        ticket.labels.some((label) => label.toLowerCase().includes(q)) ||
+        ticket.assignee?.name.toLowerCase().includes(q)
       );
     });
   }, [query, tickets]);
 
-  async function handleCreateTicket(
-    draft: TicketDraft,
-  ) {
+  async function handleCreateTicket(draft: TicketDraft) {
     try {
       setError(null);
 
@@ -139,41 +107,28 @@ export default function TicketsPage() {
         assignee_id: draft.assignee_id,
       });
 
-      setTickets((current) => [
-        created,
-        ...current,
-      ]);
+      setTickets((current) => [created, ...current]);
     } catch {
       setError("Failed to create ticket.");
     }
   }
 
-  async function handleUpdateTicket(
-    updatedTicket: Ticket,
-  ) {
+  async function handleUpdateTicket(updatedTicket: Ticket) {
     try {
       setError(null);
 
-      const updated = await updateTicket(
-        updatedTicket.id,
-        {
-          title: updatedTicket.title,
-          summary: updatedTicket.summary,
-          status: updatedTicket.status,
-          priority: updatedTicket.priority,
-          labels: updatedTicket.labels,
-          project_id: updatedTicket.project_id,
-          assignee_id:
-            updatedTicket.assignee?.id ?? null,
-        },
-      );
+      const updated = await updateTicket(updatedTicket.id, {
+        title: updatedTicket.title,
+        summary: updatedTicket.summary,
+        status: updatedTicket.status,
+        priority: updatedTicket.priority,
+        labels: updatedTicket.labels,
+        project_id: updatedTicket.project_id,
+        assignee_id: updatedTicket.assignee?.id ?? null,
+      });
 
       setTickets((current) =>
-        current.map((ticket) =>
-          ticket.id === updated.id
-            ? updated
-            : ticket,
-        ),
+        current.map((ticket) => (ticket.id === updated.id ? updated : ticket)),
       );
 
       setSelectedTicket(updated);
@@ -182,15 +137,8 @@ export default function TicketsPage() {
     }
   }
 
-  function handleDeleteTicket(
-    ticketId: number,
-  ) {
-    setTickets((current) =>
-      current.filter(
-        (ticket) => ticket.id !== ticketId,
-      ),
-    );
-
+  function handleDeleteTicket(ticketId: number) {
+    setTickets((current) => current.filter((ticket) => ticket.id !== ticketId));
     setSelectedTicket(null);
   }
 
@@ -220,8 +168,7 @@ export default function TicketsPage() {
             </h1>
 
             <p className="text-[#A0A0A0]">
-              Track engineering work, debugging tasks,
-              and product fixes.
+              Track engineering work, debugging tasks, and product fixes.
             </p>
           </div>
         </div>
@@ -229,6 +176,8 @@ export default function TicketsPage() {
         {canCreateTicket && (
           <CreateTicketDialog
             projects={projectOptions}
+            users={users}
+            currentUser={user}
             onCreate={handleCreateTicket}
           />
         )}
@@ -251,37 +200,24 @@ export default function TicketsPage() {
 
           {loading ? (
             <div className="flex min-h-[260px] items-center justify-center rounded-[20px] border border-[#262626] bg-[#0D0D0D]">
-              <p className="text-sm text-[#A0A0A0]">
-                Loading tickets...
-              </p>
+              <p className="text-sm text-[#A0A0A0]">Loading tickets...</p>
             </div>
           ) : error ? (
             <div className="flex min-h-[260px] items-center justify-center rounded-[20px] border border-red-500/20 bg-red-500/5">
-              <p className="text-sm text-red-400">
-                {error}
-              </p>
+              <p className="text-sm text-red-400">{error}</p>
             </div>
           ) : filteredTickets.length > 0 ? (
             view === "board" ? (
-              <TicketsBoard
-                tickets={filteredTickets}
-                onOpen={setSelectedTicket}
-              />
+              <TicketsBoard tickets={filteredTickets} onOpen={setSelectedTicket} />
             ) : (
-              <TicketsTable
-                tickets={filteredTickets}
-                onOpen={setSelectedTicket}
-              />
+              <TicketsTable tickets={filteredTickets} onOpen={setSelectedTicket} />
             )
           ) : (
             <div className="flex min-h-[260px] flex-col items-center justify-center rounded-[20px] border border-dashed border-[#303030] bg-[#0D0D0D] p-8 text-center">
-              <p className="text-lg font-medium text-white">
-                No tickets found
-              </p>
+              <p className="text-lg font-medium text-white">No tickets found</p>
 
               <p className="mt-1 max-w-sm text-sm text-[#A0A0A0]">
-                Try a different search term or clear
-                the current filters.
+                Try a different search term or clear the current filters.
               </p>
             </div>
           )}
@@ -292,6 +228,7 @@ export default function TicketsPage() {
         key={selectedTicket?.id ?? "none"}
         ticket={selectedTicket}
         projects={projectOptions}
+        users={users}
         open={Boolean(selectedTicket)}
         onOpenChange={(open) => {
           if (!open) {

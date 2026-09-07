@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { Plus } from "lucide-react";
+import type { User } from "@/types/auth";
+import { canAssign } from "@/lib/rbac";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -75,8 +77,12 @@ function buildInitialState(
 export function CreateTicketDialog({
   projects,
   onCreate,
+  users,
+  currentUser,
 }: {
   projects: ProjectOption[];
+  users: User[];
+  currentUser : User | null;
   onCreate: (ticket: TicketDraft) => void;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -88,6 +94,10 @@ export function CreateTicketDialog({
 
   const [error, setError] =
     React.useState<string | null>(null);
+
+  const assignableUsers = currentUser
+    ? users.filter((u) => canAssign(currentUser, u))
+    : [];
 
   function resetForm() {
     setForm(buildInitialState(projects));
@@ -248,11 +258,15 @@ export function CreateTicketDialog({
                 </label>
 
                 <Select
-                  value="unassigned"
-                  onValueChange={() =>
+                  value={
+                    form.assignee_id === null
+                      ? "unassigned"
+                      : String(form.assignee_id)
+                  }
+                  onValueChange={(value) =>
                     setForm((current) => ({
                       ...current,
-                      assignee_id: null,
+                      assignee_id: value === "unassigned" ? null : Number(value),
                     }))
                   }
                 >
@@ -264,6 +278,11 @@ export function CreateTicketDialog({
                     <SelectItem value="unassigned">
                       Unassigned
                     </SelectItem>
+                    {assignableUsers.map((u) => (
+                      <SelectItem key={u.id} value={String(u.id)}>
+                        {u.full_name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

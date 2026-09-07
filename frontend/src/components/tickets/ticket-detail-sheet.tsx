@@ -17,7 +17,7 @@ import type {
   TicketStatus,
 } from "@/lib/types";
 
-import { can } from "@/lib/rbac";
+import { can, canAssign } from "@/lib/rbac";
 import { useAuthStore } from "@/store/auth-store";
 
 import { deleteTicket } from "@/lib/tickets";
@@ -45,6 +45,8 @@ import {
 
 import { Separator } from "@/components/ui/separator";
 
+import type { User } from "@/types/auth";
+
 type ProjectOption = {
   id: number;
   name: string;
@@ -56,7 +58,7 @@ type TicketFormState = {
   status: TicketStatus;
   priority: Priority;
   projectId: string;
-  assignee: string;
+  assigneeId: number | null;
   labels: string;
 };
 
@@ -85,16 +87,14 @@ function initialsFromName(name: string) {
     .toUpperCase();
 }
 
-function buildFormState(
-  ticket: Ticket,
-): TicketFormState {
+function buildFormState(ticket: Ticket): TicketFormState {
   return {
     title: ticket.title,
     summary: ticket.summary,
     status: ticket.status,
     priority: ticket.priority,
     projectId: String(ticket.project_id),
-    assignee: ticket.assignee?.name ?? "",
+    assigneeId: ticket.assignee?.id ?? null,
     labels: ticket.labels.join(", "),
   };
 }
@@ -102,6 +102,7 @@ function buildFormState(
 export function TicketDetailSheet({
   ticket,
   projects,
+  users,
   open,
   onOpenChange,
   onSave,
@@ -109,57 +110,37 @@ export function TicketDetailSheet({
 }: {
   ticket: Ticket | null;
   projects: ProjectOption[];
+  users: User[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (ticket: Ticket) => void;
   onDelete: (ticketId: number) => void;
 }) {
-  const user = useAuthStore(
-    (state) => state.user,
+  const user = useAuthStore((state) => state.user);
+
+  const canEditTicket = can(user, "ticket:edit", ticket ?? undefined);
+  const canDeleteTicket = can(user, "ticket:delete", ticket ?? undefined);
+
+  const assignableUsers = user ? users.filter((u) => canAssign(user, u)) : [];
+
+  const [form, setForm] = React.useState<TicketFormState | null>(() =>
+    ticket ? buildFormState(ticket) : null,
   );
 
-  const canEditTicket = can(
-    user,
-    "ticket:edit",
-    ticket ?? undefined,
-  );
-
-  const canDeleteTicket = can(
-    user,
-    "ticket:delete",
-    ticket ?? undefined,
-  );
-
-  const [form, setForm] =
-    React.useState<TicketFormState | null>(() =>
-      ticket ? buildFormState(ticket) : null,
-    );
-
-  const [error, setError] =
-    React.useState<string | null>(null);
-
-  const [deleting, setDeleting] =
-    React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
 
   const projectNameById = React.useMemo(() => {
-    return new Map(
-      projects.map((project) => [
-        project.id,
-        project.name,
-      ]),
-    );
+    return new Map(projects.map((project) => [project.id, project.name]));
   }, [projects]);
 
   React.useEffect(() => {
-    setForm(
-      ticket ? buildFormState(ticket) : null,
-    );
+    setForm(ticket ? buildFormState(ticket) : null);
     setError(null);
   }, [ticket]);
 
   function handleClose() {
     if (deleting) return;
-
     onOpenChange(false);
     setError(null);
   }
@@ -170,23 +151,15 @@ export function TicketDetailSheet({
   ) {
     setForm((current) => {
       if (!current) return current;
-
-      return {
-        ...current,
-        [key]: value,
-      };
+      return { ...current, [key]: value };
     });
   }
 
-  function handleSubmit(
-    e: React.FormEvent<HTMLFormElement>,
-  ) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     if (!canEditTicket) {
-      setError(
-        "You do not have permission to edit this ticket.",
-      );
+      setError("You do not have permission to edit this ticket.");
       return;
     }
 
@@ -196,9 +169,7 @@ export function TicketDetailSheet({
     const summary = form.summary.trim();
 
     if (!title || !summary || !form.projectId) {
-      setError(
-        "Please fill in the title, summary, and project.",
-      );
+      setError("Please fill in the title, summary, and project.");
       return;
     }
 
@@ -207,6 +178,11 @@ export function TicketDetailSheet({
       .map((label) => label.trim())
       .filter(Boolean);
 
+    const assignedUser =
+      form.assigneeId !== null
+        ? users.find((u) => u.id === form.assigneeId)
+        : undefined;
+
     onSave({
       ...ticket,
       title,
@@ -214,13 +190,12 @@ export function TicketDetailSheet({
       status: form.status,
       priority: form.priority,
       project_id: Number(form.projectId),
-      assignee: form.assignee
+      labels,
+      assignee: assignedUser
         ? {
-            id: ticket.assignee?.id ?? 0,
-            name: form.assignee,
-            initials: initialsFromName(
-              form.assignee,
-            ),
+            id: assignedUser.id,
+            name: assignedUser.full_name,
+            initials: initialsFromName(assignedUser.full_name),
           }
         : null,
     });
@@ -269,32 +244,21 @@ export function TicketDetailSheet({
           <div className="flex h-full flex-col pt-6">
             <SheetHeader className="space-y-3">
               <div className="flex items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className="rounded-full"
-                >
+                <Badge variant="outline" className="rounded-full">
                   {ticket.key}
                 </Badge>
 
-                <Badge
-                  variant="secondary"
-                  className="rounded-full capitalize"
-                >
+                <Badge variant="secondary" className="rounded-full capitalize">
                   {form.status}
                 </Badge>
 
-                <Badge
-                  variant="secondary"
-                  className="rounded-full capitalize"
-                >
+                <Badge variant="secondary" className="rounded-full capitalize">
                   {form.priority}
                 </Badge>
               </div>
 
               <SheetTitle className="text-2xl">
-                {canEditTicket
-                  ? "Edit ticket"
-                  : "Ticket details"}
+                {canEditTicket ? "Edit ticket" : "Ticket details"}
               </SheetTitle>
 
               <SheetDescription>
@@ -311,36 +275,22 @@ export function TicketDetailSheet({
               className="flex flex-1 flex-col gap-5 overflow-y-auto"
             >
               <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Title
-                </label>
+                <label className="text-sm font-medium">Title</label>
 
                 <Input
                   value={form.title}
-                  onChange={(e) =>
-                    updateField(
-                      "title",
-                      e.target.value,
-                    )
-                  }
+                  onChange={(e) => updateField("title", e.target.value)}
                   placeholder="Add robot state timeline"
                   disabled={!canEditTicket || deleting}
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Summary
-                </label>
+                <label className="text-sm font-medium">Summary</label>
 
                 <Textarea
                   value={form.summary}
-                  onChange={(e) =>
-                    updateField(
-                      "summary",
-                      e.target.value,
-                    )
-                  }
+                  onChange={(e) => updateField("summary", e.target.value)}
                   className="min-h-32"
                   placeholder="Explain what needs to be done..."
                   disabled={!canEditTicket || deleting}
@@ -349,18 +299,11 @@ export function TicketDetailSheet({
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Project
-                  </label>
+                  <label className="text-sm font-medium">Project</label>
 
                   <Select
                     value={form.projectId}
-                    onValueChange={(value) =>
-                      updateField(
-                        "projectId",
-                        value ?? "",
-                      )
-                    }
+                    onValueChange={(value) => updateField("projectId", value ?? "")}
                     disabled={!canEditTicket || deleting}
                   >
                     <SelectTrigger>
@@ -369,10 +312,7 @@ export function TicketDetailSheet({
 
                     <SelectContent>
                       {projects.map((project) => (
-                        <SelectItem
-                          key={project.id}
-                          value={String(project.id)}
-                        >
+                        <SelectItem key={project.id} value={String(project.id)}>
                           {project.name}
                         </SelectItem>
                       ))}
@@ -381,35 +321,44 @@ export function TicketDetailSheet({
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Assignee
-                  </label>
+                  <label className="text-sm font-medium">Assignee</label>
 
-                  <Input
-                    value={form.assignee}
-                    onChange={(e) =>
+                  <Select
+                    value={
+                      form.assigneeId === null
+                        ? "unassigned"
+                        : String(form.assigneeId)
+                    }
+                    onValueChange={(value) =>
                       updateField(
-                        "assignee",
-                        e.target.value,
+                        "assigneeId",
+                        value === "unassigned" ? null : Number(value),
                       )
                     }
-                    placeholder="Aarav"
                     disabled={!canEditTicket || deleting}
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
+                      {assignableUsers.map((u) => (
+                        <SelectItem key={u.id} value={String(u.id)}>
+                          {u.full_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Status
-                  </label>
+                  <label className="text-sm font-medium">Status</label>
 
                   <Select
                     value={form.status}
                     onValueChange={(value) =>
-                      updateField(
-                        "status",
-                        value as TicketStatus,
-                      )
+                      updateField("status", value as TicketStatus)
                     }
                     disabled={!canEditTicket || deleting}
                   >
@@ -418,32 +367,22 @@ export function TicketDetailSheet({
                     </SelectTrigger>
 
                     <SelectContent>
-                      {statusOptions.map(
-                        (status) => (
-                          <SelectItem
-                            key={status}
-                            value={status}
-                          >
-                            {status}
-                          </SelectItem>
-                        ),
-                      )}
+                      {statusOptions.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Priority
-                  </label>
+                  <label className="text-sm font-medium">Priority</label>
 
                   <Select
                     value={form.priority}
                     onValueChange={(value) =>
-                      updateField(
-                        "priority",
-                        value as Priority,
-                      )
+                      updateField("priority", value as Priority)
                     }
                     disabled={!canEditTicket || deleting}
                   >
@@ -452,16 +391,11 @@ export function TicketDetailSheet({
                     </SelectTrigger>
 
                     <SelectContent>
-                      {priorityOptions.map(
-                        (priority) => (
-                          <SelectItem
-                            key={priority}
-                            value={priority}
-                          >
-                            {priority}
-                          </SelectItem>
-                        ),
-                      )}
+                      {priorityOptions.map((priority) => (
+                        <SelectItem key={priority} value={priority}>
+                          {priority}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -475,12 +409,7 @@ export function TicketDetailSheet({
 
                 <Input
                   value={form.labels}
-                  onChange={(e) =>
-                    updateField(
-                      "labels",
-                      e.target.value,
-                    )
-                  }
+                  onChange={(e) => updateField("labels", e.target.value)}
                   placeholder="UI, Robotics, Debugging"
                   disabled={!canEditTicket || deleting}
                 />
@@ -500,9 +429,8 @@ export function TicketDetailSheet({
                     </p>
 
                     <p className="text-sm font-medium">
-                      {projectNameById.get(
-                        Number(form.projectId),
-                      ) ?? "Unknown project"}
+                      {projectNameById.get(Number(form.projectId)) ??
+                        "Unknown project"}
                     </p>
                   </div>
                 </div>
@@ -516,9 +444,12 @@ export function TicketDetailSheet({
                     </p>
 
                     <p className="text-sm font-medium">
-                      {initialsFromName(
-                        form.assignee,
-                      )}
+                      {form.assigneeId !== null
+                        ? initialsFromName(
+                            users.find((u) => u.id === form.assigneeId)
+                              ?.full_name ?? "",
+                          )
+                        : "—"}
                     </p>
                   </div>
                 </div>
@@ -531,9 +462,7 @@ export function TicketDetailSheet({
                       Updated
                     </p>
 
-                    <p className="text-sm font-medium">
-                      {ticket.updated_at}
-                    </p>
+                    <p className="text-sm font-medium">{ticket.updated_at}</p>
                   </div>
                 </div>
               </div>
@@ -553,9 +482,7 @@ export function TicketDetailSheet({
                     disabled={deleting}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    {deleting
-                      ? "Deleting..."
-                      : "Delete"}
+                    {deleting ? "Deleting..." : "Delete"}
                   </Button>
                 ) : (
                   <div />
@@ -572,10 +499,7 @@ export function TicketDetailSheet({
                   </Button>
 
                   {canEditTicket && (
-                    <Button
-                      type="submit"
-                      disabled={deleting}
-                    >
+                    <Button type="submit" disabled={deleting}>
                       <Save className="mr-2 h-4 w-4" />
                       Save changes
                     </Button>

@@ -14,3 +14,7 @@ frontend/.next/
 
 # Env
 backend/.env
+
+.vscode/
+digest.txt
+venv/

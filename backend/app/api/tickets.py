@@ -88,6 +88,12 @@ def next_ticket_key(db: Session) -> str:
 
     return f"LEL-{max_number + 1:03d}"
 
+def can_assign(assigner: User, assignee: User) -> bool:
+    if assigner.role == UserRole.ADMIN:
+        return assignee.role in (UserRole.HEAD, UserRole.MEMBER)
+    if assigner.role == UserRole.HEAD:
+        return assignee.role == UserRole.MEMBER
+    return False
 
 @router.get(
     "",
@@ -166,16 +172,11 @@ def create_ticket(
         )
 
     if payload.assignee_id is not None:
-        assignee = db.get(
-            User,
-            payload.assignee_id,
-        )
-
+        assignee = db.get(User, payload.assignee_id)
         if not assignee:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Assignee not found",
-            )
+            raise HTTPException(404, "Assignee not found")
+        if not can_assign(current_user, assignee):
+            raise HTTPException(403, "You cannot assign tickets to this user")
 
     ticket = Ticket(
         key=next_ticket_key(db),
@@ -266,6 +267,12 @@ def update_ticket(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Assignee not found",
+            )
+
+        if not can_assign(current_user, assignee):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail = "You cannot assign tickets to this user"
             )
 
     if "labels" in updates:
