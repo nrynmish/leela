@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Plus } from "lucide-react";
+
 import type { User } from "@/types/auth";
 import { canAssign } from "@/lib/rbac";
 
@@ -62,13 +63,17 @@ const priorityOptions: Priority[] = [
 
 function buildInitialState(
   projects: ProjectOption[],
+  projectId?: number,
 ): CreateTicketForm {
   return {
     title: "",
     summary: "",
     status: "todo",
     priority: "medium",
-    project_id: projects[0]?.id ?? "",
+    project_id:
+      projectId ??
+      projects[0]?.id ??
+      "",
     assignee_id: null,
     labels: "",
   };
@@ -76,20 +81,26 @@ function buildInitialState(
 
 export function CreateTicketDialog({
   projects,
-  onCreate,
   users,
   currentUser,
+  onCreate,
+  projectId,
+  projectName,
+  triggerLabel = "New Ticket",
 }: {
   projects: ProjectOption[];
   users: User[];
-  currentUser : User | null;
-  onCreate: (ticket: TicketDraft) => void;
+  currentUser: User | null;
+  onCreate: (ticket: TicketDraft) => void | Promise<void>;
+  projectId?: number;
+  projectName?: string;
+  triggerLabel?: string;
 }) {
   const [open, setOpen] = React.useState(false);
 
   const [form, setForm] =
     React.useState<CreateTicketForm>(() =>
-      buildInitialState(projects),
+      buildInitialState(projects, projectId),
     );
 
   const [error, setError] =
@@ -100,7 +111,13 @@ export function CreateTicketDialog({
     : [];
 
   function resetForm() {
-    setForm(buildInitialState(projects));
+    setForm(
+      buildInitialState(
+        projects,
+        projectId,
+      ),
+    );
+
     setError(null);
   }
 
@@ -117,7 +134,7 @@ export function CreateTicketDialog({
     setOpen(true);
   }
 
-  function handleSubmit(
+  async function handleSubmit(
     e: React.FormEvent<HTMLFormElement>,
   ) {
     e.preventDefault();
@@ -136,20 +153,27 @@ export function CreateTicketDialog({
       return;
     }
 
-    onCreate({
-      title,
-      summary,
-      status: form.status,
-      priority: form.priority,
-      project_id: form.project_id,
-      assignee_id: form.assignee_id,
-      labels: form.labels
-        .split(",")
-        .map((label) => label.trim())
-        .filter(Boolean),
-    });
+    try {
+      setError(null);
 
-    handleOpenChange(false);
+      await onCreate({
+        title,
+        summary,
+        status: form.status,
+        priority: form.priority,
+        project_id: form.project_id,
+        assignee_id: form.assignee_id,
+        labels: form.labels
+          .split(",")
+          .map((label) => label.trim())
+          .filter(Boolean),
+      });
+
+      setOpen(false);
+      resetForm();
+    } catch {
+      setError("Failed to create ticket.");
+    }
   }
 
   return (
@@ -159,7 +183,7 @@ export function CreateTicketDialog({
         onClick={handleCreateClick}
       >
         <Plus className="mr-2 h-4 w-4" />
-        New Ticket
+        {triggerLabel}
       </Button>
 
       <Dialog
@@ -173,7 +197,9 @@ export function CreateTicketDialog({
             </DialogTitle>
 
             <DialogDescription>
-              Add a new issue to the workspace.
+              {projectName
+                ? `Create a ticket for ${projectName}.`
+                : "Add a new issue to the workspace."}
             </DialogDescription>
           </DialogHeader>
 
@@ -222,34 +248,45 @@ export function CreateTicketDialog({
                   Project
                 </label>
 
-                <Select
-                  value={
-                    form.project_id === ""
-                      ? undefined
-                      : String(form.project_id)
-                  }
-                  onValueChange={(value) =>
-                    setForm((current) => ({
-                      ...current,
-                      project_id: Number(value),
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select project" />
-                  </SelectTrigger>
+                {projectId ? (
+                  <div className="flex h-10 items-center rounded-md border border-[#262626] bg-[#141414] px-3 text-sm text-white">
+                    {projectName ??
+                      projects.find(
+                        (project) =>
+                          project.id === projectId,
+                      )?.name ??
+                      `Project #${projectId}`}
+                  </div>
+                ) : (
+                  <Select
+                    value={
+                      form.project_id === ""
+                        ? undefined
+                        : String(form.project_id)
+                    }
+                    onValueChange={(value) =>
+                      setForm((current) => ({
+                        ...current,
+                        project_id: Number(value),
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select project" />
+                    </SelectTrigger>
 
-                  <SelectContent>
-                    {projects.map((project) => (
-                      <SelectItem
-                        key={project.id}
-                        value={String(project.id)}
-                      >
-                        {project.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    <SelectContent>
+                      {projects.map((project) => (
+                        <SelectItem
+                          key={project.id}
+                          value={String(project.id)}
+                        >
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -266,7 +303,10 @@ export function CreateTicketDialog({
                   onValueChange={(value) =>
                     setForm((current) => ({
                       ...current,
-                      assignee_id: value === "unassigned" ? null : Number(value),
+                      assignee_id:
+                        value === "unassigned"
+                          ? null
+                          : Number(value),
                     }))
                   }
                 >
@@ -278,8 +318,12 @@ export function CreateTicketDialog({
                     <SelectItem value="unassigned">
                       Unassigned
                     </SelectItem>
+
                     {assignableUsers.map((u) => (
-                      <SelectItem key={u.id} value={String(u.id)}>
+                      <SelectItem
+                        key={u.id}
+                        value={String(u.id)}
+                      >
                         {u.full_name}
                       </SelectItem>
                     ))}
@@ -297,7 +341,8 @@ export function CreateTicketDialog({
                   onValueChange={(value) =>
                     setForm((current) => ({
                       ...current,
-                      status: value as TicketStatus,
+                      status:
+                        value as TicketStatus,
                     }))
                   }
                 >
@@ -328,7 +373,8 @@ export function CreateTicketDialog({
                   onValueChange={(value) =>
                     setForm((current) => ({
                       ...current,
-                      priority: value as Priority,
+                      priority:
+                        value as Priority,
                     }))
                   }
                 >

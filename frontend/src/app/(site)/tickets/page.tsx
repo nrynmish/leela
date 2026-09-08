@@ -31,12 +31,21 @@ import { createTicket, getTickets, updateTicket } from "@/lib/tickets";
 import { can } from "@/lib/rbac";
 import { useAuthStore } from "@/store/auth-store";
 
-import type { Ticket, TicketDraft } from "@/lib/types";
+import type {
+  Ticket,
+  TicketDraft,
+  TicketStatus,
+} from "@/lib/types";
 
 export default function TicketsPage() {
   const user = useAuthStore((state) => state.user);
 
   const canCreateTicket = can(user, "ticket:create");
+
+  const canDragTickets = can(
+    user,
+    "ticket:status:update",
+  );
 
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"board" | "table">("board");
@@ -151,6 +160,66 @@ export default function TicketsPage() {
     [projects],
   );
 
+  async function handleTicketStatusChange(
+    ticket: Ticket,
+    status: TicketStatus,
+  ) {
+    const previousStatus = ticket.status;
+
+    setTickets((current) =>
+      current.map((item) =>
+        item.id === ticket.id
+          ? {
+              ...item,
+              status,
+            }
+          : item,
+      ),
+    );
+
+    try {
+      const updated = await updateTicket(
+        ticket.id,
+        {
+          status,
+        },
+      );
+
+      setTickets((current) =>
+        current.map((item) =>
+          item.id === updated.id
+            ? updated
+            : item,
+        ),
+      );
+
+      setSelectedTicket((current) =>
+        current?.id === updated.id
+          ? updated
+          : current,
+      );
+    } catch {
+      setTickets((current) =>
+        current.map((item) =>
+          item.id === ticket.id
+            ? {
+                ...item,
+                status: previousStatus,
+              }
+            : item,
+        ),
+      );
+
+      setError(
+        "Failed to update ticket status.",
+      );
+
+      throw new Error(
+        "Failed to update ticket status",
+      );
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -208,7 +277,14 @@ export default function TicketsPage() {
             </div>
           ) : filteredTickets.length > 0 ? (
             view === "board" ? (
-              <TicketsBoard tickets={filteredTickets} onOpen={setSelectedTicket} />
+              <TicketsBoard
+                tickets={filteredTickets}
+                onOpen={setSelectedTicket}
+                canDrag={canDragTickets}
+                onStatusChange={
+                  handleTicketStatusChange
+                }
+              />
             ) : (
               <TicketsTable tickets={filteredTickets} onOpen={setSelectedTicket} />
             )

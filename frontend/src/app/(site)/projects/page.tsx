@@ -125,6 +125,20 @@ export default function ProjectsPage() {
     setEditProject(project);
   }
 
+  function handleProjectUpdated(
+    updatedProject: Project,
+  ) {
+    setProjects((current) =>
+      current.map((project) =>
+        project.id === updatedProject.id
+          ? updatedProject
+          : project,
+      ),
+    );
+
+    setSelectedProject(updatedProject);
+  }
+
   function handleCreateOpen(
     open: boolean,
   ) {
@@ -310,6 +324,7 @@ export default function ProjectsPage() {
         }}
         onEdit={handleEdit}
         onDeleted={loadProjects}
+        onProjectUpdated={handleProjectUpdated}
       />
 
       <CreateProjectDialog

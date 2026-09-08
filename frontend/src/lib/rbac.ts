@@ -9,7 +9,8 @@ export type Permission =
   | "ticket:view"
   | "ticket:create"
   | "ticket:edit"
-  | "ticket:delete";
+  | "ticket:delete"
+  | "ticket:status:update";
 
 interface TicketLike {
   created_by: number;
@@ -64,17 +65,32 @@ export function can(
         )
       );
 
+    case "ticket:status:update":
+      return user.role === "admin";
+
     default:
       return false;
   }
 }
 
-export function canAssign(assigner: User, assignee: User): boolean {
+export function canAssign(
+  assigner: User,
+  assignee: User,
+): boolean {
   if (assigner.role === "admin") {
-    return assignee.role === "head" || assignee.role === "member";
+    return (
+      assignee.role === "head" ||
+      assignee.role === "member"
+    );
   }
+
   if (assigner.role === "head") {
-    return assignee.role === "member" && assignee.department === assigner.department;
+    return (
+      assignee.role === "member" &&
+      assignee.department ===
+        assigner.department
+    );
   }
+
   return false;
 }

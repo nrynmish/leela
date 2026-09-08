@@ -1,14 +1,13 @@
 "use client";
 
 import * as React from "react";
-
 import {
   CalendarDays,
   FolderKanban,
   Save,
   Tag,
-  Trash2,
   UserRound,
+  X,
 } from "lucide-react";
 
 import type {
@@ -16,17 +15,10 @@ import type {
   Ticket,
   TicketStatus,
 } from "@/lib/types";
-
-import { can, canAssign } from "@/lib/rbac";
-import { useAuthStore } from "@/store/auth-store";
-
-import { deleteTicket } from "@/lib/tickets";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
 import {
   Select,
   SelectContent,
@@ -34,18 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-
 import { Separator } from "@/components/ui/separator";
-
-import type { User } from "@/types/auth";
 
 type ProjectOption = {
   id: number;
@@ -58,7 +39,7 @@ type TicketFormState = {
   status: TicketStatus;
   priority: Priority;
   projectId: string;
-  assigneeId: number | null;
+  assigneeId: string;
   labels: string;
 };
 
@@ -77,6 +58,84 @@ const priorityOptions: Priority[] = [
   "urgent",
 ];
 
+function getStatusLabel(status: TicketStatus) {
+  switch (status) {
+    case "backlog":
+      return "Backlog";
+    case "todo":
+      return "To Do";
+    case "in-progress":
+      return "In Progress";
+    case "review":
+      return "Review";
+    case "done":
+      return "Done";
+    default:
+      return status;
+  }
+}
+
+function getPriorityLabel(priority: Priority) {
+  return priority.charAt(0).toUpperCase() + priority.slice(1);
+}
+
+function getStatusStyles(status: TicketStatus) {
+  switch (status) {
+    case "done":
+      return {
+        className:
+          "border-[#CBFF3D]/25 bg-[#CBFF3D]/10 text-[#CBFF3D]",
+        dot: "bg-[#CBFF3D]",
+      };
+
+    case "in-progress":
+      return {
+        className:
+          "border-blue-400/25 bg-blue-400/10 text-blue-300",
+        dot: "bg-blue-400",
+      };
+
+    case "review":
+      return {
+        className:
+          "border-purple-400/25 bg-purple-400/10 text-purple-300",
+        dot: "bg-purple-400",
+      };
+
+    case "todo":
+      return {
+        className:
+          "border-yellow-400/25 bg-yellow-400/10 text-yellow-300",
+        dot: "bg-yellow-400",
+      };
+
+    case "backlog":
+    default:
+      return {
+        className:
+          "border-white/10 bg-white/[0.05] text-[#A0A0A0]",
+        dot: "bg-[#777]",
+      };
+  }
+}
+
+function getPriorityStyles(priority: Priority) {
+  switch (priority) {
+    case "urgent":
+      return "border-red-400/25 bg-red-400/10 text-red-300";
+
+    case "high":
+      return "border-orange-400/25 bg-orange-400/10 text-orange-300";
+
+    case "medium":
+      return "border-yellow-400/25 bg-yellow-400/10 text-yellow-300";
+
+    case "low":
+    default:
+      return "border-white/10 bg-white/[0.05] text-[#A0A0A0]";
+  }
+}
+
 function initialsFromName(name: string) {
   return name
     .split(" ")
@@ -94,7 +153,9 @@ function buildFormState(ticket: Ticket): TicketFormState {
     status: ticket.status,
     priority: ticket.priority,
     projectId: String(ticket.project_id),
-    assigneeId: ticket.assignee?.id ?? null,
+    assigneeId: ticket.assignee
+      ? String(ticket.assignee.id)
+      : "",
     labels: ticket.labels.join(", "),
   };
 }
@@ -110,37 +171,57 @@ export function TicketDetailSheet({
 }: {
   ticket: Ticket | null;
   projects: ProjectOption[];
-  users: User[];
+  users?: Array<{
+    id: number;
+    full_name: string;
+    role?: string;
+    department?: string;
+  }>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (ticket: Ticket) => void;
-  onDelete: (ticketId: number) => void;
+  onDelete?: (ticketId: number) => void;
 }) {
-  const user = useAuthStore((state) => state.user);
+  const [form, setForm] =
+    React.useState<TicketFormState | null>(() =>
+      ticket ? buildFormState(ticket) : null,
+    );
 
-  const canEditTicket = can(user, "ticket:edit", ticket ?? undefined);
-  const canDeleteTicket = can(user, "ticket:delete", ticket ?? undefined);
-
-  const assignableUsers = user ? users.filter((u) => canAssign(user, u)) : [];
-
-  const [form, setForm] = React.useState<TicketFormState | null>(() =>
-    ticket ? buildFormState(ticket) : null,
-  );
-
-  const [error, setError] = React.useState<string | null>(null);
-  const [deleting, setDeleting] = React.useState(false);
-
-  const projectNameById = React.useMemo(() => {
-    return new Map(projects.map((project) => [project.id, project.name]));
-  }, [projects]);
+  const [error, setError] =
+    React.useState<string | null>(null);
 
   React.useEffect(() => {
-    setForm(ticket ? buildFormState(ticket) : null);
-    setError(null);
+    if (ticket) {
+      setForm(buildFormState(ticket));
+      setError(null);
+    }
   }, [ticket]);
 
+  React.useEffect(() => {
+    if (!open) {
+      setError(null);
+    }
+  }, [open]);
+
+  const projectNameById = React.useMemo(() => {
+    return new Map(
+      projects.map((project) => [
+        project.id,
+        project.name,
+      ]),
+    );
+  }, [projects]);
+
+  const userNameById = React.useMemo(() => {
+    return new Map(
+      (users ?? []).map((user) => [
+        user.id,
+        user.full_name,
+      ]),
+    );
+  }, [users]);
+
   function handleClose() {
-    if (deleting) return;
     onOpenChange(false);
     setError(null);
   }
@@ -150,26 +231,33 @@ export function TicketDetailSheet({
     value: TicketFormState[K],
   ) {
     setForm((current) => {
-      if (!current) return current;
-      return { ...current, [key]: value };
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [key]: value,
+      };
     });
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
 
-    if (!canEditTicket) {
-      setError("You do not have permission to edit this ticket.");
+    if (!ticket || !form) {
       return;
     }
-
-    if (!ticket || !form) return;
 
     const title = form.title.trim();
     const summary = form.summary.trim();
 
     if (!title || !summary || !form.projectId) {
-      setError("Please fill in the title, summary, and project.");
+      setError(
+        "Please fill in the title, summary, and project.",
+      );
       return;
     }
 
@@ -178,10 +266,25 @@ export function TicketDetailSheet({
       .map((label) => label.trim())
       .filter(Boolean);
 
-    const assignedUser =
-      form.assigneeId !== null
-        ? users.find((u) => u.id === form.assigneeId)
-        : undefined;
+    const assigneeId = form.assigneeId
+      ? Number(form.assigneeId)
+      : null;
+
+    const existingAssignee =
+      assigneeId !== null
+        ? ticket.assignee?.id === assigneeId
+          ? ticket.assignee
+          : {
+              id: assigneeId,
+              name:
+                userNameById.get(assigneeId) ??
+                "Unknown user",
+              initials: initialsFromName(
+                userNameById.get(assigneeId) ??
+                  "Unknown user",
+              ),
+            }
+        : null;
 
     onSave({
       ...ticket,
@@ -189,130 +292,315 @@ export function TicketDetailSheet({
       summary,
       status: form.status,
       priority: form.priority,
-      project_id: Number(form.projectId),
       labels,
-      assignee: assignedUser
-        ? {
-            id: assignedUser.id,
-            name: assignedUser.full_name,
-            initials: initialsFromName(assignedUser.full_name),
-          }
-        : null,
+      project_id: Number(form.projectId),
+      assignee: existingAssignee,
     });
 
     handleClose();
   }
 
-  async function handleDelete() {
-    if (!ticket || !canDeleteTicket || deleting) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `Delete ${ticket.key}? This action cannot be undone.`,
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setDeleting(true);
-      setError(null);
-
-      await deleteTicket(ticket.id);
-
-      onDelete(ticket.id);
-      onOpenChange(false);
-    } catch {
-      setError("Failed to delete ticket.");
-    } finally {
-      setDeleting(false);
-    }
+  if (!ticket || !form || !open) {
+    return null;
   }
 
+  const statusStyles = getStatusStyles(form.status);
+  const priorityStyles = getPriorityStyles(
+    form.priority,
+  );
+
+  const selectedProjectName =
+    projectNameById.get(Number(form.projectId)) ??
+    "Unknown project";
+
+  const selectedAssigneeName = form.assigneeId
+    ? userNameById.get(Number(form.assigneeId)) ??
+      ticket.assignee?.name ??
+      "Unknown user"
+    : "Unassigned";
+
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (deleting) return;
-        onOpenChange(nextOpen);
-      }}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="ticket-detail-title"
     >
-      <SheetContent className="w-full sm:max-w-2xl">
-        {ticket && form ? (
-          <div className="flex h-full flex-col pt-6">
-            <SheetHeader className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="rounded-full">
-                  {ticket.key}
-                </Badge>
+      {/* Backdrop */}
+      <button
+        type="button"
+        aria-label="Close ticket details"
+        className="absolute inset-0 cursor-default bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+        onClick={() => onOpenChange(false)}
+      />
 
-                <Badge variant="secondary" className="rounded-full capitalize">
-                  {form.status}
-                </Badge>
+      {/* Modal */}
+      <div
+        className="
+          relative z-10
+          flex max-h-[92vh] w-full max-w-3xl flex-col
+          overflow-hidden
+          rounded-3xl
+          border border-[#292929]
+          bg-[#0d0d0d]
+          shadow-2xl shadow-black/50
+          animate-in fade-in zoom-in-95 duration-200
+        "
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between gap-6 px-6 pb-5 pt-6 sm:px-8 sm:pt-7">
+          <div className="min-w-0 space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge
+                variant="outline"
+                className="rounded-full border-white/10 bg-white/[0.03] px-3 py-1 font-mono text-xs text-[#BDBDBD]"
+              >
+                {ticket.key}
+              </Badge>
 
-                <Badge variant="secondary" className="rounded-full capitalize">
-                  {form.priority}
-                </Badge>
-              </div>
-
-              <SheetTitle className="text-2xl">
-                {canEditTicket ? "Edit ticket" : "Ticket details"}
-              </SheetTitle>
-
-              <SheetDescription>
-                {canEditTicket
-                  ? "Update the ticket details and save the changes."
-                  : "You have view-only access to this ticket."}
-              </SheetDescription>
-            </SheetHeader>
-
-            <Separator className="my-6" />
-
-            <form
-              onSubmit={handleSubmit}
-              className="flex flex-1 flex-col gap-5 overflow-y-auto"
-            >
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Title</label>
-
-                <Input
-                  value={form.title}
-                  onChange={(e) => updateField("title", e.target.value)}
-                  placeholder="Add robot state timeline"
-                  disabled={!canEditTicket || deleting}
+              <Badge
+                variant="outline"
+                className={`rounded-full px-3 py-1 ${statusStyles.className}`}
+              >
+                <span
+                  className={`mr-1.5 h-1.5 w-1.5 rounded-full ${statusStyles.dot}`}
                 />
+                {getStatusLabel(form.status)}
+              </Badge>
+
+              <Badge
+                variant="outline"
+                className={`rounded-full px-3 py-1 ${priorityStyles}`}
+              >
+                {getPriorityLabel(form.priority)}
+              </Badge>
+            </div>
+
+            <div>
+              <h2
+                id="ticket-detail-title"
+                className="text-2xl font-semibold tracking-tight text-white sm:text-3xl"
+              >
+                {ticket.title}
+              </h2>
+
+              <p className="mt-1 text-sm text-[#777]">
+                Ticket details and configuration
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={handleClose}
+            className="
+              flex h-9 w-9 shrink-0 items-center justify-center
+              rounded-full border border-white/10
+              text-[#777]
+              transition-colors
+              hover:border-white/20
+              hover:bg-white/[0.06]
+              hover:text-white
+            "
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <Separator className="bg-[#202020]" />
+
+        {/* Content */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <div className="overflow-y-auto px-6 py-6 sm:px-8">
+            <div className="grid gap-6">
+              {/* Summary */}
+              <div className="rounded-2xl border border-[#242424] bg-[#121212] p-5">
+                <div className="mb-4 flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.05]">
+                    <Tag className="h-4 w-4 text-[#CBFF3D]" />
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium text-white">
+                      Ticket information
+                    </p>
+                    <p className="text-xs text-[#666]">
+                      Core ticket details
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="ticket-title"
+                      className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]"
+                    >
+                      Title
+                    </label>
+
+                    <Input
+                      id="ticket-title"
+                      value={form.title}
+                      onChange={(event) =>
+                        updateField(
+                          "title",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Ticket title"
+                      className="
+                        border-[#292929]
+                        bg-[#0d0d0d]
+                        text-white
+                        placeholder:text-[#555]
+                        focus-visible:ring-[#CBFF3D]/30
+                      "
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="ticket-summary"
+                      className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]"
+                    >
+                      Summary
+                    </label>
+
+                    <Textarea
+                      id="ticket-summary"
+                      value={form.summary}
+                      onChange={(event) =>
+                        updateField(
+                          "summary",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Describe the ticket..."
+                      rows={5}
+                      className="
+                        resize-none
+                        border-[#292929]
+                        bg-[#0d0d0d]
+                        text-white
+                        placeholder:text-[#555]
+                        focus-visible:ring-[#CBFF3D]/30
+                      "
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Summary</label>
+              {/* Metadata */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                {/* Status */}
+                <div className="rounded-2xl border border-[#242424] bg-[#121212] p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4 text-[#CBFF3D]" />
+                    <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]">
+                      Status
+                    </span>
+                  </div>
 
-                <Textarea
-                  value={form.summary}
-                  onChange={(e) => updateField("summary", e.target.value)}
-                  className="min-h-32"
-                  placeholder="Explain what needs to be done..."
-                  disabled={!canEditTicket || deleting}
-                />
-              </div>
+                  <Select
+                    value={form.status}
+                    onValueChange={(value) =>
+                      updateField(
+                        "status",
+                        value as TicketStatus,
+                      )
+                    }
+                  >
+                    <SelectTrigger className="border-[#292929] bg-[#0d0d0d] text-white">
+                      <SelectValue />
+                    </SelectTrigger>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Project</label>
+                    <SelectContent>
+                      {statusOptions.map((status) => (
+                        <SelectItem
+                          key={status}
+                          value={status}
+                        >
+                          {getStatusLabel(status)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Priority */}
+                <div className="rounded-2xl border border-[#242424] bg-[#121212] p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="text-sm font-semibold text-[#CBFF3D]">
+                      !
+                    </span>
+                    <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]">
+                      Priority
+                    </span>
+                  </div>
+
+                  <Select
+                    value={form.priority}
+                    onValueChange={(value) =>
+                      updateField(
+                        "priority",
+                        value as Priority,
+                      )
+                    }
+                  >
+                    <SelectTrigger className="border-[#292929] bg-[#0d0d0d] text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {priorityOptions.map(
+                        (priority) => (
+                          <SelectItem
+                            key={priority}
+                            value={priority}
+                          >
+                            {getPriorityLabel(priority)}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Project */}
+                <div className="rounded-2xl border border-[#242424] bg-[#121212] p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <FolderKanban className="h-4 w-4 text-[#CBFF3D]" />
+                    <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]">
+                      Project
+                    </span>
+                  </div>
 
                   <Select
                     value={form.projectId}
-                    onValueChange={(value) => updateField("projectId", value ?? "")}
-                    disabled={!canEditTicket || deleting}
+                    onValueChange={(value) =>
+                      updateField(
+                        "projectId",
+                        value ?? "",
+                      )
+                    }
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select project" />
+                    <SelectTrigger className="border-[#292929] bg-[#0d0d0d] text-white">
+                      <SelectValue>
+                        {selectedProjectName}
+                      </SelectValue>
                     </SelectTrigger>
 
                     <SelectContent>
                       {projects.map((project) => (
-                        <SelectItem key={project.id} value={String(project.id)}>
+                        <SelectItem
+                          key={project.id}
+                          value={String(project.id)}
+                        >
                           {project.name}
                         </SelectItem>
                       ))}
@@ -320,80 +608,46 @@ export function TicketDetailSheet({
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Assignee</label>
+                {/* Assignee */}
+                <div className="rounded-2xl border border-[#242424] bg-[#121212] p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <UserRound className="h-4 w-4 text-[#CBFF3D]" />
+                    <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]">
+                      Assignee
+                    </span>
+                  </div>
 
                   <Select
                     value={
-                      form.assigneeId === null
-                        ? "unassigned"
-                        : String(form.assigneeId)
+                      form.assigneeId || "unassigned"
                     }
                     onValueChange={(value) =>
                       updateField(
                         "assigneeId",
-                        value === "unassigned" ? null : Number(value),
+                        value === null ||
+                          value === "unassigned"
+                          ? ""
+                          : value,
                       )
                     }
-                    disabled={!canEditTicket || deleting}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
+                    <SelectTrigger className="border-[#292929] bg-[#0d0d0d] text-white">
+                      <SelectValue>
+                        {selectedAssigneeName}
+                      </SelectValue>
                     </SelectTrigger>
 
                     <SelectContent>
-                      <SelectItem value="unassigned">Unassigned</SelectItem>
-                      {assignableUsers.map((u) => (
-                        <SelectItem key={u.id} value={String(u.id)}>
-                          {u.full_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                      <SelectItem value="unassigned">
+                        Unassigned
+                      </SelectItem>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Status</label>
-
-                  <Select
-                    value={form.status}
-                    onValueChange={(value) =>
-                      updateField("status", value as TicketStatus)
-                    }
-                    disabled={!canEditTicket || deleting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {statusOptions.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Priority</label>
-
-                  <Select
-                    value={form.priority}
-                    onValueChange={(value) =>
-                      updateField("priority", value as Priority)
-                    }
-                    disabled={!canEditTicket || deleting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {priorityOptions.map((priority) => (
-                        <SelectItem key={priority} value={priority}>
-                          {priority}
+                      {(users ?? []).map((user) => (
+                        <SelectItem
+                          key={user.id}
+                          value={String(user.id)}
+                        >
+                          {user.full_name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -401,115 +655,112 @@ export function TicketDetailSheet({
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium">
-                  <Tag className="h-4 w-4" />
-                  Labels
-                </label>
+              {/* Labels */}
+              <div className="rounded-2xl border border-[#242424] bg-[#121212] p-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-[#CBFF3D]" />
+                  <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]">
+                    Labels
+                  </span>
+                </div>
 
                 <Input
                   value={form.labels}
-                  onChange={(e) => updateField("labels", e.target.value)}
-                  placeholder="UI, Robotics, Debugging"
-                  disabled={!canEditTicket || deleting}
+                  onChange={(event) =>
+                    updateField(
+                      "labels",
+                      event.target.value,
+                    )
+                  }
+                  placeholder="hardware, navigation, bug"
+                  className="
+                    border-[#292929]
+                    bg-[#0d0d0d]
+                    text-white
+                    placeholder:text-[#555]
+                    focus-visible:ring-[#CBFF3D]/30
+                  "
                 />
 
-                <p className="text-xs text-muted-foreground">
-                  Separate labels with commas.
+                <p className="mt-2 text-xs text-[#555]">
+                  Separate multiple labels with commas.
                 </p>
               </div>
 
-              <div className="grid gap-3 rounded-3xl border bg-muted/20 p-4 sm:grid-cols-2">
-                <div className="flex items-start gap-3">
-                  <FolderKanban className="mt-0.5 h-4 w-4 text-muted-foreground" />
-
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      Project
-                    </p>
-
-                    <p className="text-sm font-medium">
-                      {projectNameById.get(Number(form.projectId)) ??
-                        "Unknown project"}
-                    </p>
-                  </div>
+              {/* Existing ticket metadata */}
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl border border-[#242424] bg-[#121212] p-4">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#666]">
+                    Ticket ID
+                  </p>
+                  <p className="mt-2 font-mono text-sm text-white">
+                    #{ticket.id}
+                  </p>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <UserRound className="mt-0.5 h-4 w-4 text-muted-foreground" />
-
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      Assignee initials
-                    </p>
-
-                    <p className="text-sm font-medium">
-                      {form.assigneeId !== null
-                        ? initialsFromName(
-                            users.find((u) => u.id === form.assigneeId)
-                              ?.full_name ?? "",
-                          )
-                        : "—"}
-                    </p>
-                  </div>
+                <div className="rounded-2xl border border-[#242424] bg-[#121212] p-4">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#666]">
+                    Created By
+                  </p>
+                  <p className="mt-2 text-sm text-white">
+                    User #{ticket.created_by}
+                  </p>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <CalendarDays className="mt-0.5 h-4 w-4 text-muted-foreground" />
-
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      Updated
-                    </p>
-
-                    <p className="text-sm font-medium">{ticket.updated_at}</p>
-                  </div>
+                <div className="rounded-2xl border border-[#242424] bg-[#121212] p-4">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#666]">
+                    Updated
+                  </p>
+                  <p className="mt-2 text-sm text-white">
+                    {new Date(
+                      ticket.updated_at,
+                    ).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
 
-              {error ? (
-                <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+              {error && (
+                <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                   {error}
                 </div>
-              ) : null}
-
-              <div className="mt-auto flex items-center justify-between gap-3 border-t pt-4">
-                {canDeleteTicket ? (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={handleDelete}
-                    disabled={deleting}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    {deleting ? "Deleting..." : "Delete"}
-                  </Button>
-                ) : (
-                  <div />
-                )}
-
-                <div className="flex items-center gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleClose}
-                    disabled={deleting}
-                  >
-                    Close
-                  </Button>
-
-                  {canEditTicket && (
-                    <Button type="submit" disabled={deleting}>
-                      <Save className="mr-2 h-4 w-4" />
-                      Save changes
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </form>
+              )}
+            </div>
           </div>
-        ) : null}
-      </SheetContent>
-    </Sheet>
+
+          {/* Footer */}
+          <div className="border-t border-[#202020] bg-[#0b0b0b] px-6 py-4 sm:px-8">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-[#555]">
+                Changes are saved to the Leela backend.
+              </p>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleClose}
+                  className="text-[#999] hover:bg-white/[0.05] hover:text-white"
+                >
+                  Cancel
+                </Button>
+
+                <Button
+                  type="submit"
+                  className="
+                    gap-2
+                    bg-[#CBFF3D]
+                    text-black
+                    hover:bg-[#CBFF3D]/90
+                  "
+                >
+                  <Save className="h-4 w-4" />
+                  Save changes
+                </Button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

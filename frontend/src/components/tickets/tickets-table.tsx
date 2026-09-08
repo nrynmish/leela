@@ -31,12 +31,15 @@ export function TicketsTable({
             <TableHead className="text-[#A0A0A0]">Labels</TableHead>
             <TableHead className="text-[#A0A0A0]">Assignee</TableHead>
             <TableHead className="text-[#A0A0A0]">Updated</TableHead>
-            <TableHead className="text-right text-[#A0A0A0]" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {tickets.map((ticket) => (
-            <TableRow key={ticket.id} className="border-[#262626] hover:bg-[#141414]">
+            <TableRow
+              key={ticket.id}
+              className="cursor-pointer border-[#262626] hover:bg-[#141414]"
+              onClick={() => onOpen(ticket)}
+            >
               <TableCell>
                 <div className="space-y-1">
                   <p className="font-medium text-white">{ticket.key}</p>
@@ -68,11 +71,6 @@ export function TicketsTable({
               </TableCell>
               <TableCell className="text-sm text-[#A0A0A0]">
                 {ticket.updated_at}
-              </TableCell>
-              <TableCell className="text-right">
-                <Button variant="ghost" size="sm" onClick={() => onOpen(ticket)} className="rounded-full text-[#A0A0A0] hover:bg-[#1A1A1A] hover:text-white">
-                  Open
-                </Button>
               </TableCell>
             </TableRow>
           ))}

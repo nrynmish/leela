@@ -73,7 +73,10 @@ export function ProjectCard({
     statusMap[project.status] ?? statusMap.paused;
 
   return (
-    <Card className="overflow-hidden rounded-[18px] border-[#262626] bg-[#141414] text-white transition-all hover:border-[#3A3A3A] hover:bg-[#181818]">
+    <Card
+      onClick={() => onOpen(project)}
+      className="cursor-pointer overflow-hidden rounded-[18px] border-[#262626] bg-[#141414] text-white transition-all hover:border-[#3A3A3A] hover:bg-[#181818]"
+    >
       <CardHeader className="space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-2">
@@ -102,7 +105,10 @@ export function ProjectCard({
             variant="ghost"
             size="icon"
             className="shrink-0 rounded-full text-[#666] hover:bg-[#1A1A1A] hover:text-white"
-            onClick={() => onOpen(project)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpen(project);
+            }}
           >
             <ArrowUpRight className="h-4 w-4" />
           </Button>
@@ -127,17 +133,6 @@ export function ProjectCard({
             day: "numeric",
             year: "numeric",
           })}
-        </div>
-
-        <div className="mt-4">
-          <Button
-            variant="outline"
-            className="w-full rounded-full border-[#303030] bg-[#1A1A1A] text-xs text-[#AAA] hover:bg-[#222] hover:text-white"
-            onClick={() => onOpen(project)}
-          >
-            <Ticket className="mr-2 h-3.5 w-3.5" />
-            Open project
-          </Button>
         </div>
       </CardContent>
     </Card>
