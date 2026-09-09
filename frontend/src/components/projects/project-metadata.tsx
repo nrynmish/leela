@@ -19,7 +19,7 @@ export function ProjectMetadata({
     <div className="grid gap-4 md:grid-cols-3">
       <Card className="rounded-[20px] border-[#262626] bg-[#141414]">
         <CardContent className="p-6">
-          <FolderKanban className="mb-3 h-5 w-5 text-[#CBFF3D]" />
+          <FolderKanban className="mb-3 h-5 w-5 text-[var(--accent-color)]" />
 
           <p className="text-sm text-[#A0A0A0]">
             Status
@@ -33,7 +33,7 @@ export function ProjectMetadata({
 
       <Card className="rounded-[20px] border-[#262626] bg-[#141414]">
         <CardContent className="p-6">
-          <CheckCircle2 className="mb-3 h-5 w-5 text-[#CBFF3D]" />
+          <CheckCircle2 className="mb-3 h-5 w-5 text-[var(--accent-color)]" />
 
           <p className="text-sm text-[#A0A0A0]">
             Created By
@@ -47,7 +47,7 @@ export function ProjectMetadata({
 
       <Card className="rounded-[20px] border-[#262626] bg-[#141414]">
         <CardContent className="p-6">
-          <CalendarDays className="mb-3 h-5 w-5 text-[#CBFF3D]" />
+          <CalendarDays className="mb-3 h-5 w-5 text-[var(--accent-color)]" />
 
           <p className="text-sm text-[#A0A0A0]">
             Deadline

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/common/theme-toggle";
+import { ColorSchemePicker } from "@/components/layout/color-scheme-picker";
 import { useAuthStore } from "@/store/auth-store";
 
 export function Topbar() {
@@ -41,9 +42,15 @@ export function Topbar() {
       </div>
 
       <div className="absolute right-6 flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="rounded-full border border-[#262626] bg-[#141414] text-[#A0A0A0] hover:bg-[#1A1A1A] hover:text-white">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full border border-[#262626] bg-[#141414] text-[#A0A0A0] hover:bg-[#1A1A1A] hover:text-white"
+        >
           <Bell className="h-4 w-4" />
         </Button>
+
+        <ColorSchemePicker />
 
         <ThemeToggle />
 
@@ -57,7 +64,7 @@ export function Topbar() {
           </span>
         </div>
 
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#CBFF3D] text-sm font-medium text-[#0A0A0A]">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent-color)] text-sm font-medium text-[#0A0A0A]">
           {initials}
         </div>
 

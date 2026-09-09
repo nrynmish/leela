@@ -150,7 +150,7 @@ export function TicketsBoard({
               duration-200
               ${
                 isDragTarget
-                  ? "border-[#CBFF3D]/60 bg-[#CBFF3D]/[0.04] shadow-[0_0_0_1px_rgba(203,255,61,0.12)]"
+                  ? "border-[color-mix(in_srgb,var(--accent-color)_60%,transparent)] bg-[var(--accent-color)]/[0.04] shadow-[0_0_0_1px_rgba(var(--accent-rgb),0.12)]"
                   : "border-[#262626] bg-[#0D0D0D]"
               }
             `}
@@ -245,8 +245,8 @@ export function TicketsBoard({
             {canDrag &&
               isDragTarget &&
               columnTickets.length === 0 && (
-                <div className="flex min-h-20 items-center justify-center rounded-xl border border-dashed border-[#CBFF3D]/30 bg-[#CBFF3D]/[0.03]">
-                  <p className="text-xs text-[#CBFF3D]">
+                <div className="flex min-h-20 items-center justify-center rounded-xl border border-dashed border-[color-mix(in_srgb,var(--accent-color)_30%,transparent)] bg-[color-mix(in_srgb,var(--accent-color)_3%,transparent)]">
+                  <p className="text-xs text-[var(--accent-color)]">
                     Drop ticket here
                   </p>
                 </div>

@@ -44,7 +44,7 @@ export function DashboardHero({
             href="/dashboard"
             className="flex items-center gap-2"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#CBFF3D] text-black">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent-color)] text-black">
               <LayoutDashboard className="h-4 w-4" />
             </div>
 
@@ -56,7 +56,7 @@ export function DashboardHero({
           <nav className="hidden items-center gap-1 rounded-full border border-[#262626] bg-[#141414] p-1 md:flex">
             <Link
               href="/dashboard"
-              className="rounded-full bg-[#CBFF3D] px-4 py-2 text-xs font-semibold text-black"
+              className="rounded-full bg-[var(--accent-color)] px-4 py-2 text-xs font-semibold text-black"
             >
               Overview
             </Link>
@@ -114,14 +114,14 @@ export function DashboardHero({
         <div className="relative grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
           <div>
             <div className="mb-5 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-[#7D7D7D]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#CBFF3D]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-color)]" />
               Engineering workspace
             </div>
 
             <h1 className="max-w-2xl text-4xl font-semibold tracking-[-0.04em] md:text-5xl">
               Engineering
               <br />
-              <span className="text-[#CBFF3D]">
+              <span className="text-[var(--accent-color)]">
                 Command Center.
               </span>
             </h1>
@@ -133,7 +133,7 @@ export function DashboardHero({
 
             <div className="mt-7 flex flex-wrap gap-3">
               <Link href="/tickets">
-                <Button className="rounded-full bg-[#CBFF3D] px-5 text-black hover:bg-[#CBFF3D]/90">
+                <Button className="rounded-full bg-[var(--accent-color)] px-5 text-black hover:bg-[color-mix(in_srgb,var(--accent-color)_90%,white)]">
                   <Plus className="mr-2 h-4 w-4" />
                   New Ticket
                 </Button>
@@ -153,14 +153,14 @@ export function DashboardHero({
 
           {/* Insight cards */}
           <div className="relative mx-auto h-52 w-full max-w-md">
-            <div className="absolute right-2 top-5 h-40 w-64 rotate-6 rounded-2xl border border-[#CBFF3D]/10 bg-[#CBFF3D]/5" />
+            <div className="absolute right-2 top-5 h-40 w-64 rotate-6 rounded-2xl border border-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] bg-[color-mix(in_srgb,var(--accent-color)_5%,transparent)]" />
 
             <div className="absolute right-6 top-2 h-44 w-72 -rotate-3 rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm" />
 
             <div className="absolute right-0 top-7 w-full max-w-sm rounded-2xl border border-[#343434] bg-[#F0F4DF] p-5 text-[#101010] shadow-2xl">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-semibold">
-                  <span className="h-2 w-2 rounded-full bg-[#CBFF3D]" />
+                  <span className="h-2 w-2 rounded-full bg-[var(--accent-color)]" />
                   Workspace Insight
                 </div>
 

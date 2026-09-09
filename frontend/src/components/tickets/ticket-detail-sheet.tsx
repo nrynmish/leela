@@ -84,8 +84,8 @@ function getStatusStyles(status: TicketStatus) {
     case "done":
       return {
         className:
-          "border-[#CBFF3D]/25 bg-[#CBFF3D]/10 text-[#CBFF3D]",
-        dot: "bg-[#CBFF3D]",
+          "border-[color-mix(in_srgb,var(--accent-color)_25%,transparent)] bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] text-[var(--accent-color)]",
+        dot: "bg-[var(--accent-color)]",
       };
 
     case "in-progress":
@@ -421,7 +421,7 @@ export function TicketDetailSheet({
               <div className="rounded-2xl border border-[#242424] bg-[#121212] p-5">
                 <div className="mb-4 flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.05]">
-                    <Tag className="h-4 w-4 text-[#CBFF3D]" />
+                    <Tag className="h-4 w-4 text-[var(--accent-color)]" />
                   </div>
 
                   <div>
@@ -458,7 +458,7 @@ export function TicketDetailSheet({
                         bg-[#0d0d0d]
                         text-white
                         placeholder:text-[#555]
-                        focus-visible:ring-[#CBFF3D]/30
+                        focus-visible:ring-[color-mix(in_srgb,var(--accent-color)_30%,transparent)]
                       "
                     />
                   </div>
@@ -488,7 +488,7 @@ export function TicketDetailSheet({
                         bg-[#0d0d0d]
                         text-white
                         placeholder:text-[#555]
-                        focus-visible:ring-[#CBFF3D]/30
+                        focus-visible:ring-[color-mix(in_srgb,var(--accent-color)_30%,transparent)]
                       "
                     />
                   </div>
@@ -500,7 +500,7 @@ export function TicketDetailSheet({
                 {/* Status */}
                 <div className="rounded-2xl border border-[#242424] bg-[#121212] p-5">
                   <div className="mb-3 flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4 text-[#CBFF3D]" />
+                    <CalendarDays className="h-4 w-4 text-[var(--accent-color)]" />
                     <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]">
                       Status
                     </span>
@@ -535,7 +535,7 @@ export function TicketDetailSheet({
                 {/* Priority */}
                 <div className="rounded-2xl border border-[#242424] bg-[#121212] p-5">
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[#CBFF3D]">
+                    <span className="text-sm font-semibold text-[var(--accent-color)]">
                       !
                     </span>
                     <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]">
@@ -574,7 +574,7 @@ export function TicketDetailSheet({
                 {/* Project */}
                 <div className="rounded-2xl border border-[#242424] bg-[#121212] p-5">
                   <div className="mb-3 flex items-center gap-2">
-                    <FolderKanban className="h-4 w-4 text-[#CBFF3D]" />
+                    <FolderKanban className="h-4 w-4 text-[var(--accent-color)]" />
                     <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]">
                       Project
                     </span>
@@ -611,7 +611,7 @@ export function TicketDetailSheet({
                 {/* Assignee */}
                 <div className="rounded-2xl border border-[#242424] bg-[#121212] p-5">
                   <div className="mb-3 flex items-center gap-2">
-                    <UserRound className="h-4 w-4 text-[#CBFF3D]" />
+                    <UserRound className="h-4 w-4 text-[var(--accent-color)]" />
                     <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]">
                       Assignee
                     </span>
@@ -658,7 +658,7 @@ export function TicketDetailSheet({
               {/* Labels */}
               <div className="rounded-2xl border border-[#242424] bg-[#121212] p-5">
                 <div className="mb-3 flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-[#CBFF3D]" />
+                  <Tag className="h-4 w-4 text-[var(--accent-color)]" />
                   <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]">
                     Labels
                   </span>
@@ -678,7 +678,7 @@ export function TicketDetailSheet({
                     bg-[#0d0d0d]
                     text-white
                     placeholder:text-[#555]
-                    focus-visible:ring-[#CBFF3D]/30
+                    focus-visible:ring-[color-mix(in_srgb,var(--accent-color)_30%,transparent)]
                   "
                 />
 
@@ -748,9 +748,9 @@ export function TicketDetailSheet({
                   type="submit"
                   className="
                     gap-2
-                    bg-[#CBFF3D]
+                    bg-[var(--accent-color)]
                     text-black
-                    hover:bg-[#CBFF3D]/90
+                    hover:bg-[color-mix(in_srgb,var(--accent-color)_90%,white)]
                   "
                 >
                   <Save className="h-4 w-4" />

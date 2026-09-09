@@ -51,7 +51,7 @@ export function LoginForm() {
     <div className="flex w-full max-w-7xl overflow-hidden rounded-[28px] border border-[#262626] bg-[#0D0D0D]">
       <div className="hidden w-1/2 border-r border-[#262626] bg-[radial-gradient(circle_at_top_left,rgba(203,255,61,0.11),transparent_25%),linear-gradient(135deg,#0D0D0D_0%,#11150B_100%)] p-12 lg:flex lg:flex-col lg:justify-between">
         <div>
-          <h1 className="text-5xl font-black tracking-tight text-[#CBFF3D]">
+          <h1 className="text-5xl font-black tracking-tight text-[var(--accent-color)]">
             LEELA
           </h1>
 
@@ -64,7 +64,7 @@ export function LoginForm() {
           <h2 className="text-5xl font-bold leading-tight text-white">
             Plan. Build. Track.
             <br />
-            <span className="text-[#CBFF3D]">
+            <span className="text-[var(--accent-color)]">
               Ship Together.
             </span>
           </h2>

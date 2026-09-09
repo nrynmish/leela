@@ -35,12 +35,12 @@ export function Sidebar() {
               className={cn(
                 "group relative flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium transition-all duration-200",
                 pathname === item.href
-                  ? "bg-[#CBFF3D]/10 text-white ring-1 ring-[#CBFF3D]/20"
+                  ? "bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] text-white ring-1 ring-[color-mix(in_srgb,var(--accent-color)_20%,transparent)]"
                   : "text-[#A0A0A0] hover:bg-[#1A1A1A] hover:text-white"
               )}
             >
               {pathname === item.href ? (
-                <div className="absolute left-0 top-2 h-8 w-1 rounded-r-full bg-[#CBFF3D]" />
+                <div className="absolute left-0 top-2 h-8 w-1 rounded-r-full bg-[var(--accent-color)]" />
               ) : null}
 
               <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
@@ -65,7 +65,7 @@ export function Sidebar() {
               </p>
             </div>
 
-            <div className="h-2.5 w-2.5 rounded-full bg-[#CBFF3D] ring-4 ring-[#CBFF3D]/20" />
+            <div className="h-2.5 w-2.5 rounded-full bg-[var(--accent-color)] ring-4 ring-[color-mix(in_srgb,var(--accent-color)_20%,transparent)]" />
           </div>
         </div>
       </div>

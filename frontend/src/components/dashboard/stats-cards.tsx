@@ -29,7 +29,7 @@ function DistributionBar({
   return (
     <div className="mt-5 h-2 overflow-hidden rounded-full bg-[#2E2E2E]">
       <div
-        className="h-full rounded-full bg-[#CBFF3D] transition-all"
+        className="h-full rounded-full bg-[var(--accent-color)] transition-all"
         style={{ width: `${percentage}%` }}
       />
     </div>

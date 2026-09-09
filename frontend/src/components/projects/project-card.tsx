@@ -33,8 +33,8 @@ const statusMap: Record<
   active: {
     label: "ACTIVE",
     className:
-      "border-[#CBFF3D]/20 bg-[#CBFF3D]/10 text-[#CBFF3D]",
-    dot: "bg-[#CBFF3D]",
+      "border-[color-mix(in_srgb,var(--accent-color)_20%,transparent)] bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] text-[var(--accent-color)]",
+    dot: "bg-[var(--accent-color)]",
   },
   paused: {
     label: "PAUSED",

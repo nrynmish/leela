@@ -60,7 +60,7 @@ export default function SettingsPage() {
             >
               <Card className="h-full cursor-pointer rounded-[20px] border-[#262626] bg-[#141414] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#3A3A3A] hover:bg-[#181818]">
                 <CardContent className="flex items-start gap-4 p-6">
-                  <div className="rounded-[16px] border border-[#262626] bg-[#0D0D0D] p-3 text-[#CBFF3D] transition-colors group-hover:bg-[#CBFF3D]/10">
+                  <div className="rounded-[16px] border border-[#262626] bg-[#0D0D0D] p-3 text-[var(--accent-color)] transition-colors group-hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)]">
                     <Icon className="h-5 w-5" />
                   </div>
 

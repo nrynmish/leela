@@ -37,12 +37,12 @@ export function ProfileHeader({
 
           <div className="space-y-1 text-sm text-[#A0A0A0]">
             <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-[#CBFF3D]" />
+              <Mail className="h-4 w-4 text-[var(--accent-color)]" />
               {user.email}
             </div>
 
             <div className="flex items-center gap-2">
-              <GraduationCap className="h-4 w-4 text-[#CBFF3D]" />
+              <GraduationCap className="h-4 w-4 text-[var(--accent-color)]" />
               {user.roll_no} • {user.department}
             </div>
           </div>

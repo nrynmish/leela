@@ -55,7 +55,9 @@
   --card-foreground: #ffffff;
   --popover: #141414;
   --popover-foreground: #ffffff;
-  --primary: #cbff3d;
+  --accent-color: #CBFF3D;
+  --accent-rgb: 203, 255, 61;
+  --primary: var(--accent-color);
   --primary-foreground: #0a0a0a;
   --secondary: #1a1a1a;
   --secondary-foreground: #ffffff;
@@ -66,8 +68,8 @@
   --destructive: #ef4444;
   --border: #262626;
   --input: #141414;
-  --ring: rgba(203, 255, 61, 0.45);
-  --chart-1: #cbff3d;
+  --ring: rgba(var(--accent-rgb), 0.45);
+  --chart-1: var(--accent-color);
   --chart-2: #d7ef7a;
   --chart-3: #8ea356;
   --chart-4: #4d4d4d;
@@ -75,12 +77,12 @@
   --radius: 1rem;
   --sidebar: #0d0d0d;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #cbff3d;
+  --sidebar-primary: var(--accent-color);
   --sidebar-primary-foreground: #0a0a0a;
   --sidebar-accent: #1a1a1a;
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #262626;
-  --sidebar-ring: rgba(203, 255, 61, 0.45);
+  --sidebar-ring: rgba(var(--accent-rgb), 0.45);
 }
 
 .dark {
@@ -90,7 +92,9 @@
   --card-foreground: #ffffff;
   --popover: #141414;
   --popover-foreground: #ffffff;
-  --primary: #cbff3d;
+  --accent-color: #CBFF3D;
+  --accent-rgb: 203, 255, 61;
+  --primary: var(--accent-color);
   --primary-foreground: #0a0a0a;
   --secondary: #1a1a1a;
   --secondary-foreground: #ffffff;
@@ -101,20 +105,20 @@
   --destructive: #ef4444;
   --border: #262626;
   --input: #141414;
-  --ring: rgba(203, 255, 61, 0.45);
-  --chart-1: #cbff3d;
+  --ring: rgba(var(--accent-rgb), 0.45);
+  --chart-1: var(--accent-color);
   --chart-2: #d7ef7a;
   --chart-3: #8ea356;
   --chart-4: #4d4d4d;
   --chart-5: #2d2d2d;
   --sidebar: #0d0d0d;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #cbff3d;
+  --sidebar-primary: var(--accent-color);
   --sidebar-primary-foreground: #0a0a0a;
   --sidebar-accent: #1a1a1a;
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #262626;
-  --sidebar-ring: rgba(203, 255, 61, 0.45);
+  --sidebar-ring: rgba(var(--accent-rgb), 0.45);
 }
 
 @layer base {
@@ -130,7 +134,7 @@
   body {
     @apply min-h-screen bg-background text-foreground antialiased;
     background:
-      radial-gradient(circle at top, rgba(203, 255, 61, 0.06), transparent 28%),
+      radial-gradient(circle at top, rgba(var(--accent-rgb), 0.06), transparent 28%),
       #0a0a0a;
   }
 }

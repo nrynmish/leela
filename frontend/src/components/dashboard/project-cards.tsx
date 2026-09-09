@@ -30,8 +30,8 @@ const statusMap: Record<
   active: {
     label: "ACTIVE",
     className:
-      "border-[#CBFF3D]/20 bg-[#CBFF3D]/10 text-[#CBFF3D]",
-    dot: "bg-[#CBFF3D]",
+      "border-[color-mix(in_srgb,var(--accent-color)_20%,transparent)] bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] text-[var(--accent-color)]",
+    dot: "bg-[var(--accent-color)]",
   },
   paused: {
     label: "PAUSED",
@@ -72,7 +72,7 @@ export function ProjectCards({
       <div className="mb-5 flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <CircleDot className="h-4 w-4 text-[#CBFF3D]" />
+            <CircleDot className="h-4 w-4 text-[var(--accent-color)]" />
             <h2 className="text-sm font-semibold">
               Project Overview
             </h2>
@@ -159,7 +159,7 @@ export function ProjectCards({
                         </p>
                       </div>
 
-                      <ArrowUpRight className="h-4 w-4 shrink-0 text-[#555] transition group-hover:text-[#CBFF3D]" />
+                      <ArrowUpRight className="h-4 w-4 shrink-0 text-[#555] transition group-hover:text-[var(--accent-color)]" />
                     </div>
 
                     <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-[#242424] pt-3 text-[10px] text-[#666]">

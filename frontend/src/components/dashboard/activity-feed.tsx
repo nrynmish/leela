@@ -42,7 +42,7 @@ export function ActivityFeed({
     <Card className="rounded-[20px] border-[#262626] bg-[#0D0D0D] text-white">
       <div className="flex items-center justify-between border-b border-[#262626] px-5 py-4">
         <div className="flex items-center gap-2">
-          <Activity className="h-4 w-4 text-[#CBFF3D]" />
+          <Activity className="h-4 w-4 text-[var(--accent-color)]" />
 
           <div>
             <h2 className="text-sm font-semibold">
@@ -96,12 +96,12 @@ export function ActivityFeed({
                     <div
                       className={`flex h-7 w-7 items-center justify-center rounded-full border ${
                         completed
-                          ? "border-[#CBFF3D]/20 bg-[#CBFF3D]/10"
+                          ? "border-[color-mix(in_srgb,var(--accent-color)_20%,transparent)] bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)]"
                           : "border-[#303030] bg-[#181818]"
                       }`}
                     >
                       {completed ? (
-                        <CircleCheck className="h-3.5 w-3.5 text-[#CBFF3D]" />
+                        <CircleCheck className="h-3.5 w-3.5 text-[var(--accent-color)]" />
                       ) : (
                         <CircleDot className="h-3.5 w-3.5 text-[#888]" />
                       )}
@@ -118,7 +118,7 @@ export function ActivityFeed({
                         {ticket.key}: {ticket.title}
                       </p>
 
-                      <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-[#444] transition group-hover:text-[#CBFF3D]" />
+                      <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-[#444] transition group-hover:text-[var(--accent-color)]" />
                     </div>
 
                     <div className="mt-1.5 flex items-center gap-2 text-[10px] text-[#666]">
