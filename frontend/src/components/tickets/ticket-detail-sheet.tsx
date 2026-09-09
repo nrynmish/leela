@@ -6,6 +6,7 @@ import {
   FolderKanban,
   Save,
   Tag,
+  Trash2,
   UserRound,
   X,
 } from "lucide-react";
@@ -729,10 +730,32 @@ export function TicketDetailSheet({
 
           {/* Footer */}
           <div className="border-t border-[#202020] bg-[#0b0b0b] px-6 py-4 sm:px-8">
-            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-[#555]">
-                Changes are saved to the Leela backend.
-              </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                {onDelete && ticket && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      const confirmed = window.confirm(
+                        `Delete ticket ${ticket.key}? This action cannot be undone.`,
+                      );
+
+                      if (confirmed) {
+                        onDelete(ticket.id);
+                      }
+                    }}
+                    className="gap-2 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete ticket
+                  </Button>
+                )}
+
+                <p className="text-xs text-[#555]">
+                  Changes are saved to the Leela backend.
+                </p>
+              </div>
 
               <div className="flex items-center gap-3">
                 <Button

@@ -26,7 +26,12 @@ import { TicketsTable } from "@/components/tickets/tickets-table";
 
 import { getProjects, type Project } from "@/lib/projects";
 
-import { createTicket, getTickets, updateTicket } from "@/lib/tickets";
+import {
+  createTicket,
+  deleteTicket,
+  getTickets,
+  updateTicket,
+} from "@/lib/tickets";
 
 import { can } from "@/lib/rbac";
 import { useAuthStore } from "@/store/auth-store";
@@ -146,9 +151,24 @@ export default function TicketsPage() {
     }
   }
 
-  function handleDeleteTicket(ticketId: number) {
-    setTickets((current) => current.filter((ticket) => ticket.id !== ticketId));
-    setSelectedTicket(null);
+  async function handleDeleteTicket(ticketId: number) {
+    try {
+      setError(null);
+
+      await deleteTicket(ticketId);
+
+      setTickets((current) =>
+        current.filter((ticket) => ticket.id !== ticketId),
+      );
+
+      setSelectedTicket(null);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete ticket.",
+      );
+    }
   }
 
   const projectOptions = useMemo(
