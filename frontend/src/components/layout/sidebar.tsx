@@ -7,9 +7,11 @@ import { usePathname } from "next/navigation";
 import { navigation } from "./navigation";
 
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/auth-store";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const user = useAuthStore((state) => state.user);
 
   return (
     <aside className="hidden w-[290px] border-r border-[#262626] bg-[#0D0D0D] lg:flex lg:flex-col">
@@ -25,30 +27,36 @@ export function Sidebar() {
       </div>
 
       <nav className="flex flex-1 flex-col gap-2 p-4">
-        {navigation.map((item) => {
-          const Icon = item.icon;
+        {navigation
+          .filter(
+            (item) =>
+              !item.roles ||
+              (user && item.roles.includes(user.role)),
+          )
+          .map((item) => {
+            const Icon = item.icon;
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "group relative flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium transition-all duration-200",
-                pathname === item.href
-                  ? "bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] text-white ring-1 ring-[color-mix(in_srgb,var(--accent-color)_20%,transparent)]"
-                  : "text-[#A0A0A0] hover:bg-[#1A1A1A] hover:text-white"
-              )}
-            >
-              {pathname === item.href ? (
-                <div className="absolute left-0 top-2 h-8 w-1 rounded-r-full bg-[var(--accent-color)]" />
-              ) : null}
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "group relative flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium transition-all duration-200",
+                  pathname === item.href
+                    ? "bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] text-white ring-1 ring-[color-mix(in_srgb,var(--accent-color)_20%,transparent)]"
+                    : "text-[#A0A0A0] hover:bg-[#1A1A1A] hover:text-white"
+                )}
+              >
+                {pathname === item.href ? (
+                  <div className="absolute left-0 top-2 h-8 w-1 rounded-r-full bg-[var(--accent-color)]" />
+                ) : null}
 
-              <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+                <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
 
-              <span>{item.title}</span>
-            </Link>
-          );
-        })}
+                <span>{item.title}</span>
+              </Link>
+            );
+          })}
       </nav>
 
       <div className="border-t border-[#262626] p-4">

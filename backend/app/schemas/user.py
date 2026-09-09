@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 
-from app.core.enums import UserRole
+from app.core.enums import UserRole, UserStatus
 
 
 class UserCreate(BaseModel):
@@ -26,16 +26,12 @@ class UserLogin(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
-
     roll_no: str
-
     email: EmailStr
-
     full_name: str
-
     role: UserRole
-
     department: str
+    status: UserStatus
 
     model_config = {
         "from_attributes": True,
@@ -44,7 +40,5 @@ class UserResponse(BaseModel):
 
 class TokenResponse(BaseModel):
     access_token: str
-
     refresh_token: str
-
     token_type: str = "bearer"

@@ -1,12 +1,22 @@
 import {
-  LayoutDashboard,
   FolderKanban,
-  Ticket,
+  LayoutDashboard,
   Settings,
+  Ticket,
   User,
+  Users,
 } from "lucide-react";
 
-export const navigation = [
+import type { UserRole } from "@/types/auth";
+
+type NavigationItem = {
+  title: string;
+  href: string;
+  icon: typeof LayoutDashboard;
+  roles?: UserRole[];
+};
+
+export const navigation: NavigationItem[] = [
   {
     title: "Dashboard",
     href: "/dashboard",
@@ -31,5 +41,11 @@ export const navigation = [
     title: "Settings",
     href: "/settings",
     icon: Settings,
+  },
+  {
+    title: "Users",
+    href: "/settings/users",
+    icon: Users,
+    roles: ["admin"],
   },
 ];

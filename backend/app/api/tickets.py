@@ -98,6 +98,42 @@ def can_assign(assigner: User, assignee: User) -> bool:
         )
     return False
 
+
+def can_view_ticket(
+    ticket: Ticket,
+    current_user: User,
+    db: Session,
+) -> bool:
+    if current_user.role == UserRole.ADMIN:
+        return True
+
+    if current_user.role == UserRole.MEMBER:
+        return ticket.assignee_id == current_user.id
+
+    if current_user.role == UserRole.HEAD:
+        if ticket.assignee_id == current_user.id:
+            return True
+
+        if ticket.created_by == current_user.id:
+            return True
+
+        if ticket.assignee_id is not None:
+            assignee = db.get(
+                User,
+                ticket.assignee_id,
+            )
+
+            if (
+                assignee
+                and assignee.department
+                == current_user.department
+            ):
+                return True
+
+        return False
+
+    return False
+
 @router.get(
     "",
     response_model=list[TicketResponse],
@@ -107,14 +143,23 @@ def get_tickets(
     current_user: User = Depends(get_current_user),
 ):
     tickets = db.scalars(
-        select(Ticket).order_by(
-            Ticket.created_at.desc()
-        )
+        select(Ticket)
+        .order_by(Ticket.created_at.desc())
     ).all()
+
+    visible_tickets = [
+        ticket
+        for ticket in tickets
+        if can_view_ticket(
+            ticket,
+            current_user,
+            db,
+        )
+    ]
 
     return [
         serialize_ticket(ticket, db)
-        for ticket in tickets
+        for ticket in visible_tickets
     ]
 
 
@@ -136,6 +181,16 @@ def get_ticket(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Ticket not found",
+        )
+
+    if not can_view_ticket(
+        ticket,
+        current_user,
+        db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to view this ticket",
         )
 
     return serialize_ticket(
@@ -224,6 +279,16 @@ def update_ticket(
             detail="Ticket not found",
         )
 
+    if not can_view_ticket(
+        ticket,
+        current_user,
+        db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to modify this ticket",
+        )
+
     # Members cannot modify tickets.
     if current_user.role == UserRole.MEMBER:
         raise HTTPException(
@@ -244,6 +309,15 @@ def update_ticket(
     updates = payload.model_dump(
         exclude_unset=True
     )
+
+    if (
+        "status" in updates
+        and current_user.role != UserRole.ADMIN
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can change ticket status",
+        )
 
     if "project_id" in updates:
         project = db.get(
@@ -319,44 +393,28 @@ def delete_ticket(
             detail="Ticket not found",
         )
 
-    # Members cannot delete tickets.
     if current_user.role == UserRole.MEMBER:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Members cannot delete tickets",
         )
 
-    # Heads can delete:
-    # 1. their own tickets
-    # 2. tickets created by another Head
-    if current_user.role == UserRole.HEAD:
-        if ticket.created_by == current_user.id:
-            db.delete(ticket)
-            db.commit()
-            return
-
-        creator = db.get(
-            User,
-            ticket.created_by,
+    if not can_view_ticket(
+        ticket,
+        current_user,
+        db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to delete this ticket",
         )
 
-        if not creator:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Ticket creator not found",
-            )
-
-        if creator.role != UserRole.HEAD:
+    if current_user.role == UserRole.HEAD:
+        if ticket.created_by != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Heads can only delete tickets created by Heads",
+                detail="Heads can only delete tickets they created",
             )
-
-    # Admins can delete any ticket.
-    if current_user.role == UserRole.ADMIN:
-        db.delete(ticket)
-        db.commit()
-        return
 
     db.delete(ticket)
     db.commit()

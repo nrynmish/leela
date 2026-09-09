@@ -6,10 +6,18 @@ class UserRole(str, Enum):
     HEAD = "head"
     ADMIN = "admin"
 
+
+class UserStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
 class ProjectStatus(str, Enum):
     ACTIVE = "active"
     PAUSED = "paused"
     DONE = "done"
+
 
 class TicketStatus(str, Enum):
     BACKLOG = "backlog"

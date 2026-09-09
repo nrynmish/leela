@@ -28,9 +28,23 @@ export async function apiFetch(
   );
 
   if (!response.ok) {
-    throw new Error(
-      `API Error: ${response.status}`,
-    );
+    let message = `API Error: ${response.status}`;
+
+    try {
+      const data = await response.json();
+
+      if (typeof data?.detail === "string") {
+        message = data.detail;
+      }
+    } catch {
+      // Keep the default status-based error.
+    }
+
+    throw new Error(message);
+  }
+
+  if (response.status === 204) {
+    return undefined;
   }
 
   return response.json();

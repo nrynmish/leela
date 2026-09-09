@@ -2,7 +2,7 @@ from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Enum as SqlEnum
 
-from app.core.enums import UserRole
+from app.core.enums import UserRole, UserStatus
 from app.db.database import Base
 
 
@@ -45,4 +45,10 @@ class User(Base):
         SqlEnum(UserRole),
         nullable=False,
         default=UserRole.MEMBER,
+    )
+
+    status: Mapped[UserStatus] = mapped_column(
+        SqlEnum(UserStatus),
+        nullable=False,
+        default=UserStatus.APPROVED,
     )

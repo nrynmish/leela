@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -38,9 +39,11 @@ export function LoginForm() {
       });
 
       router.push("/dashboard");
-    } catch {
+    } catch (err) {
       setError(
-        "Invalid roll number or password",
+        err instanceof Error
+          ? err.message
+          : "Unable to sign in",
       );
     } finally {
       setLoading(false);
@@ -103,6 +106,7 @@ export function LoginForm() {
                 onChange={(e) =>
                   setRollNo(e.target.value)
                 }
+                required
               />
             </div>
 
@@ -116,17 +120,16 @@ export function LoginForm() {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) =>
-                  setPassword(
-                    e.target.value,
-                  )
+                  setPassword(e.target.value)
                 }
+                required
               />
             </div>
 
             {error && (
-              <p className="text-sm text-red-400">
+              <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
                 {error}
-              </p>
+              </div>
             )}
 
             <Button
@@ -140,6 +143,16 @@ export function LoginForm() {
                 : "Sign In"}
             </Button>
           </form>
+
+          <p className="mt-6 text-center text-sm text-[#A0A0A0]">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/register"
+              className="font-medium text-[var(--accent-color)] hover:underline"
+            >
+              Register
+            </Link>
+          </p>
         </div>
       </div>
     </div>

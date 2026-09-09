@@ -1,41 +1,65 @@
+"use client";
+
 import Link from "next/link";
 import {
   Bell,
   Palette,
   PlugZap,
   Settings2,
+  Users,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
-
-const sections = [
-  {
-    title: "General",
-    description: "Workspace preferences and defaults.",
-    href: "/settings",
-    icon: Settings2,
-  },
-  {
-    title: "Appearance",
-    description: "Theme and interface customization.",
-    href: "/settings/appearance",
-    icon: Palette,
-  },
-  {
-    title: "Notifications",
-    description: "Manage alerts and activity updates.",
-    href: "/settings/notifications",
-    icon: Bell,
-  },
-  {
-    title: "Integrations",
-    description: "Connect external tools and services.",
-    href: "/settings/integrations",
-    icon: PlugZap,
-  },
-];
+import { useAuthStore } from "@/store/auth-store";
 
 export default function SettingsPage() {
+  const user = useAuthStore((state) => state.user);
+
+  const sections = [
+    {
+      title: "General",
+      description: "Workspace preferences and defaults.",
+      href: "/settings",
+      icon: Settings2,
+    },
+    {
+      title: "Appearance",
+      description: "Theme and interface customization.",
+      href: "/settings/appearance",
+      icon: Palette,
+    },
+    {
+      title: "Notifications",
+      description: "Manage alerts and activity updates.",
+      href: "/settings/notifications",
+      icon: Bell,
+    },
+    {
+      title: "Integrations",
+      description: "Connect external tools and services.",
+      href: "/settings/integrations",
+      icon: PlugZap,
+    },
+    ...(user?.role === "admin"
+      ? [
+          {
+            title: "User Management",
+            description:
+              "Manage roles, departments, and access.",
+            href: "/settings/users",
+            icon: Users,
+          },
+          {
+            title: "Registration Requests",
+            description:
+              "Review pending member registrations.",
+            href: "/settings/registrations",
+            icon: Users,
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div className="space-y-8">
       <div>

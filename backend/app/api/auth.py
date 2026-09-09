@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.core.enums import UserRole, UserStatus
 from app.db.database import get_db
 from app.models.user import User
 from app.schemas.user import (
@@ -67,16 +68,16 @@ def register(
         password_hash=hash_password(
             payload.password
         ),
+        role=UserRole.MEMBER,
+        status=UserStatus.PENDING,
     )
 
-
     db.add(user)
-
     db.commit()
-
     db.refresh(user)
 
     return user
+
 
 @router.post(
     "/login",
@@ -105,6 +106,18 @@ def login(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
+        )
+
+    if user.status == UserStatus.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your registration is pending admin approval",
+        )
+
+    if user.status == UserStatus.REJECTED:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your registration has been rejected",
         )
 
     access_token = create_access_token(
