@@ -24,7 +24,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { getAdminUsers, updateUserRole } from "@/lib/users";
+import {
+  deleteUser,
+  getAdminUsers,
+  updateUserRole,
+} from "@/lib/users";
 import { useAuthStore } from "@/store/auth-store";
 import type { User, UserRole } from "@/types/auth";
 
@@ -165,6 +169,39 @@ export default function UsersPage() {
         err instanceof Error
           ? err.message
           : "Unable to update user",
+      );
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function handleDelete(user: User) {
+    if (user.id === currentUser?.id) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete user ${user.full_name}? This action cannot be undone.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setError(null);
+      setSavingId(user.id);
+
+      await deleteUser(user.id);
+
+      setUsers((current) =>
+        current.filter((item) => item.id !== user.id),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to delete user",
       );
     } finally {
       setSavingId(null);
@@ -412,28 +449,44 @@ export default function UsersPage() {
                         </td>
 
                         <td className="px-6 py-5 text-right">
-                          <Button
-                            size="sm"
-                            disabled={
-                              saving ||
-                              !changed ||
-                              (isSelf &&
-                                user.role === "admin" &&
-                                role !== "admin")
-                            }
-                            onClick={() =>
-                              handleSave(user)
-                            }
-                          >
-                            {saving ? (
-                              <>
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                Saving
-                              </>
-                            ) : (
-                              "Save"
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              disabled={
+                                saving ||
+                                !changed ||
+                                (isSelf &&
+                                  user.role === "admin" &&
+                                  role !== "admin")
+                              }
+                              onClick={() =>
+                                handleSave(user)
+                              }
+                            >
+                              {saving ? (
+                                <>
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  Saving
+                                </>
+                              ) : (
+                                "Edit"
+                              )}
+                            </Button>
+
+                            {!isSelf && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                                disabled={saving}
+                                onClick={() =>
+                                  handleDelete(user)
+                                }
+                              >
+                                Delete
+                              </Button>
                             )}
-                          </Button>
+                          </div>
                         </td>
                       </tr>
                     );

@@ -23,3 +23,9 @@ export async function updateUserRole(
     body: JSON.stringify(payload),
   });
 }
+
+export async function deleteUser(userId: number): Promise<void> {
+  await apiFetch(`/admin/users/${userId}`, {
+    method: "DELETE",
+  });
+}
