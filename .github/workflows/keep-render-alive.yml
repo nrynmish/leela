@@ -1,0 +1,19 @@
+name: Keep Render Backend Alive
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Render backend
+        run: |
+          curl --fail --silent --show-error \
+            --max-time 30 \
+            https://leela-2z6x.onrender.com/health
+
+          echo "Render backend is alive."
