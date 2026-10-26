@@ -30,6 +30,7 @@ import type {
   TicketDraft,
   TicketStatus,
 } from "@/lib/types";
+import { toApiIstTimestamp } from "@/lib/tickets";
 
 type ProjectOption = {
   id: number;
@@ -46,6 +47,8 @@ type CreateTicketForm = {
   assignee_ids: number[];
   assignment_mode: "individual" | "common";
   labels: string;
+  deadline: string;
+  drive_link_required: boolean;
 };
 
 const statusOptions: TicketStatus[] = [
@@ -80,6 +83,8 @@ function buildInitialState(
     assignee_ids: [],
     assignment_mode: "individual",
     labels: "",
+    deadline: "",
+    drive_link_required: false,
   };
 }
 
@@ -213,6 +218,8 @@ export function CreateTicketDialog({
           .split(",")
           .map((label) => label.trim())
           .filter(Boolean),
+        deadline: toApiIstTimestamp(form.deadline) ?? null,
+        drive_link_required: form.drive_link_required,
       });
 
       setOpen(false);
@@ -499,6 +506,42 @@ export function CreateTicketDialog({
                     )}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Deadline
+                </label>
+
+                <Input
+                  type="datetime-local"
+                  value={form.deadline}
+                  onChange={(e) =>
+                    setForm((current) => ({
+                      ...current,
+                      deadline: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={form.drive_link_required}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        drive_link_required: e.target.checked,
+                      }))
+                    }
+                    className="h-4 w-4 rounded border-[#262626] bg-[#141414]"
+                  />
+                  Allow assignees to submit a Google Drive link
+                </label>
               </div>
             </div>
 

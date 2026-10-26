@@ -28,6 +28,10 @@ class TicketCreate(BaseModel):
 
     assignee_id: int | None = None
 
+    deadline: datetime | None = None
+
+    drive_link_required: bool = False
+
 
 class TicketUpdate(BaseModel):
     title: str | None = Field(
@@ -50,6 +54,12 @@ class TicketUpdate(BaseModel):
     project_id: int | None = None
 
     assignee_id: int | None = None
+
+    deadline: datetime | None = None
+
+    drive_link_required: bool | None = None
+
+    reason: str | None = None
 
 
 class BulkTicketCreate(BaseModel):
@@ -78,11 +88,44 @@ class BulkTicketCreate(BaseModel):
 
     assignment_mode: Literal["individual", "common"] = "individual"
 
+    deadline: datetime | None = None
+
+    drive_link_required: bool = False
+
+
+class ReviewSubmission(BaseModel):
+    drive_link: str | None = None
+
+
+class ReviewDecision(BaseModel):
+    decision: Literal["approve", "request_changes"]
+    feedback: str | None = None
+    drive_link: str | None = None
+
+
+class DeadlineUpdate(BaseModel):
+    deadline: datetime | None = None
+    reason: str | None = None
+
 
 class AssigneeResponse(BaseModel):
     id: int
     name: str
     initials: str
+
+    model_config = {
+        "from_attributes": True,
+    }
+
+
+class DeadlineHistoryResponse(BaseModel):
+    id: int
+    ticket_id: int
+    previous_deadline: datetime | None = None
+    new_deadline: datetime | None = None
+    changed_by: int | None = None
+    changed_at: datetime
+    reason: str | None = None
 
     model_config = {
         "from_attributes": True,
@@ -100,9 +143,20 @@ class TicketResponse(BaseModel):
     project_id: int
     assignee: AssigneeResponse | None
     assignees: list[AssigneeResponse] = Field(default_factory=list)
+    deadline: datetime | None = None
+    drive_link_required: bool = False
+    drive_link: str | None = None
+    submitted_by: int | None = None
+    submitted_at: datetime | None = None
+    review_feedback: str | None = None
+    deadline_history: list[DeadlineHistoryResponse] = Field(default_factory=list)
     created_by: int
     created_at: datetime
     updated_at: datetime
+
+    model_config = {
+        "from_attributes": True,
+    }
 
 
 class BulkTicketCreateResponse(BaseModel):

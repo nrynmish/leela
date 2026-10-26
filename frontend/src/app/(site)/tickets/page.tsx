@@ -31,7 +31,11 @@ import {
   createTicket,
   deleteTicket,
   getTickets,
+  reviewTicket,
+  submitTicketForReview,
+  toApiIstTimestamp,
   updateTicket,
+  updateTicketDeadline,
 } from "@/lib/tickets";
 
 import { can } from "@/lib/rbac";
@@ -113,6 +117,8 @@ export default function TicketsPage() {
       setError(null);
 
       const assigneeIds = draft.assignee_ids ?? [];
+      const normalizedDeadline =
+        toApiIstTimestamp(draft.deadline) ?? null;
       const shouldUseBulk =
         assigneeIds.length > 1 ||
         draft.assignment_mode === "common";
@@ -128,6 +134,8 @@ export default function TicketsPage() {
           assignee_id: draft.assignee_id,
           assignee_ids: assigneeIds,
           assignment_mode: draft.assignment_mode,
+          deadline: normalizedDeadline,
+          drive_link_required: draft.drive_link_required,
         });
 
         setTickets((current) => [
@@ -145,6 +153,8 @@ export default function TicketsPage() {
         labels: draft.labels,
         project_id: draft.project_id,
         assignee_id: draft.assignee_id,
+        deadline: normalizedDeadline,
+        drive_link_required: draft.drive_link_required,
       });
 
       setTickets((current) => [created, ...current]);
@@ -195,6 +205,45 @@ export default function TicketsPage() {
           : "Failed to delete ticket.",
       );
     }
+  }
+
+  async function handleSubmitForReview(ticketId: number, driveLink?: string | null) {
+    const updated = await submitTicketForReview(ticketId, driveLink ?? null);
+
+    setTickets((current) =>
+      current.map((ticket) => (ticket.id === updated.id ? updated : ticket)),
+    );
+    setSelectedTicket(updated);
+    return updated;
+  }
+
+  async function handleReviewDecision(
+    ticketId: number,
+    decision: "approve" | "request_changes",
+    feedback?: string | null,
+    driveLink?: string | null,
+  ) {
+    const updated = await reviewTicket(ticketId, decision, feedback ?? null, driveLink ?? null);
+
+    setTickets((current) =>
+      current.map((ticket) => (ticket.id === updated.id ? updated : ticket)),
+    );
+    setSelectedTicket(updated);
+    return updated;
+  }
+
+  async function handleUpdateDeadline(
+    ticketId: number,
+    deadline: string | null,
+    reason?: string | null,
+  ) {
+    const updated = await updateTicketDeadline(ticketId, deadline, reason ?? null);
+
+    setTickets((current) =>
+      current.map((ticket) => (ticket.id === updated.id ? updated : ticket)),
+    );
+    setSelectedTicket(updated);
+    return updated;
   }
 
   const projectOptions = useMemo(
@@ -359,6 +408,9 @@ export default function TicketsPage() {
         }}
         onSave={handleUpdateTicket}
         onDelete={handleDeleteTicket}
+        onSubmitForReview={handleSubmitForReview}
+        onReviewDecision={handleReviewDecision}
+        onUpdateDeadline={handleUpdateDeadline}
       />
     </div>
   );

@@ -31,6 +31,16 @@ export type TicketAssignee = {
   initials: string;
 };
 
+export type TicketDeadlineHistory = {
+  id: number;
+  ticket_id: number;
+  previous_deadline: string | null;
+  new_deadline: string | null;
+  changed_by: number | null;
+  changed_at: string;
+  reason: string | null;
+};
+
 export type Ticket = {
   id: number;
   key: string;
@@ -41,6 +51,14 @@ export type Ticket = {
   labels: string[];
   project_id: number;
   assignee: TicketAssignee | null;
+  assignees: TicketAssignee[];
+  deadline: string | null;
+  drive_link_required: boolean;
+  drive_link: string | null;
+  submitted_by: number | null;
+  submitted_at: string | null;
+  review_feedback: string | null;
+  deadline_history: TicketDeadlineHistory[];
   created_by: number;
   created_at: string;
   updated_at: string;
@@ -58,6 +76,8 @@ export type TicketCreate = {
   assignee_id: number | null;
   assignee_ids?: number[];
   assignment_mode?: AssignmentMode;
+  deadline?: string | null;
+  drive_link_required?: boolean;
 };
 
 export type TicketUpdate = {
@@ -68,6 +88,10 @@ export type TicketUpdate = {
   labels?: string[];
   project_id?: number;
   assignee_id?: number | null;
+  deadline?: string | null;
+  drive_link_required?: boolean;
+  drive_link?: string | null;
+  reason?: string | null;
 };
 
 export type TicketDraft = {
@@ -80,4 +104,6 @@ export type TicketDraft = {
   assignee_ids: number[];
   assignment_mode: AssignmentMode;
   labels: string[];
+  deadline: string | null;
+  drive_link_required: boolean;
 };

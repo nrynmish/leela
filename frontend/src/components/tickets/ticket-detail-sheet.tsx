@@ -2,8 +2,7 @@
 
 import * as React from "react";
 import {
-  CalendarDays,
-  FolderKanban,
+  CalendarDays,  Check,  FolderKanban,
   Save,
   Tag,
   Trash2,
@@ -16,6 +15,10 @@ import type {
   Ticket,
   TicketStatus,
 } from "@/lib/types";
+import {
+  toApiIstTimestamp,
+  toIstDateTimeLocal,
+} from "@/lib/tickets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +45,10 @@ type TicketFormState = {
   projectId: string;
   assigneeId: string;
   labels: string;
+  deadline: string;
+  driveLinkRequired: boolean;
+  driveLink: string;
+  reviewFeedback: string;
 };
 
 const statusOptions: TicketStatus[] = [
@@ -158,6 +165,12 @@ function buildFormState(ticket: Ticket): TicketFormState {
       ? String(ticket.assignee.id)
       : "",
     labels: ticket.labels.join(", "),
+    deadline: ticket.deadline
+      ? toIstDateTimeLocal(ticket.deadline)
+      : "",
+    driveLinkRequired: ticket.drive_link_required,
+    driveLink: ticket.drive_link ?? "",
+    reviewFeedback: ticket.review_feedback ?? "",
   };
 }
 
@@ -169,6 +182,9 @@ export function TicketDetailSheet({
   onOpenChange,
   onSave,
   onDelete,
+  onSubmitForReview,
+  onReviewDecision,
+  onUpdateDeadline,
 }: {
   ticket: Ticket | null;
   projects: ProjectOption[];
@@ -182,6 +198,18 @@ export function TicketDetailSheet({
   onOpenChange: (open: boolean) => void;
   onSave: (ticket: Ticket) => void;
   onDelete?: (ticketId: number) => void;
+  onSubmitForReview?: (ticketId: number, driveLink?: string | null) => Promise<Ticket> | Ticket;
+  onReviewDecision?: (
+    ticketId: number,
+    decision: "approve" | "request_changes",
+    feedback?: string | null,
+    driveLink?: string | null,
+  ) => Promise<Ticket> | Ticket;
+  onUpdateDeadline?: (
+    ticketId: number,
+    deadline: string | null,
+    reason?: string | null,
+  ) => Promise<Ticket> | Ticket;
 }) {
   const [form, setForm] =
     React.useState<TicketFormState | null>(() =>
@@ -296,9 +324,56 @@ export function TicketDetailSheet({
       labels,
       project_id: Number(form.projectId),
       assignee: existingAssignee,
+      deadline: form.deadline || null,
+      drive_link_required: form.driveLinkRequired,
+      drive_link: form.driveLink || null,
+      review_feedback: form.reviewFeedback || null,
     });
 
     handleClose();
+  }
+
+  async function handleDeadlineSave() {
+    if (!ticket || !onUpdateDeadline) {
+      return;
+    }
+
+    try {
+      setError(null);
+      await onUpdateDeadline(
+        ticket.id,
+        form?.deadline ? toApiIstTimestamp(form.deadline) : null,
+        "Updated from ticket details",
+      );
+    } catch (updateError) {
+      setError(
+        updateError instanceof Error
+          ? updateError.message
+          : "Failed to update deadline.",
+      );
+    }
+  }
+
+  async function handleReviewSubmit(decision: "approve" | "request_changes") {
+    if (!ticket || !onReviewDecision) {
+      return;
+    }
+
+    try {
+      setError(null);
+      await onReviewDecision(
+        ticket.id,
+        decision,
+        form?.reviewFeedback || null,
+        form?.driveLink || null,
+      );
+    } catch (reviewError) {
+      setError(
+        reviewError instanceof Error
+          ? reviewError.message
+          : "Failed to process review decision.",
+      );
+    }
   }
 
   if (!ticket || !form || !open) {
@@ -688,7 +763,134 @@ export function TicketDetailSheet({
                 </p>
               </div>
 
-              {/* Existing ticket metadata */}
+              <div className="rounded-2xl border border-[#242424] bg-[#121212] p-5">
+                <div className="mb-4 flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-[var(--accent-color)]" />
+                  <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]">
+                    Lifecycle
+                  </span>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="ticket-deadline"
+                      className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]"
+                    >
+                      Deadline
+                    </label>
+                    <Input
+                      id="ticket-deadline"
+                      type="datetime-local"
+                      value={form.deadline}
+                      onChange={(event) =>
+                        updateField(
+                          "deadline",
+                          event.target.value,
+                        )
+                      }
+                      className="border-[#292929] bg-[#0d0d0d] text-white"
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleDeadlineSave}
+                      className="w-full"
+                    >
+                      Update deadline
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.12em] text-[#777]">
+                      <input
+                        type="checkbox"
+                        checked={form.driveLinkRequired}
+                        onChange={(event) =>
+                          updateField(
+                            "driveLinkRequired",
+                            event.target.checked,
+                          )
+                        }
+                        className="h-4 w-4 rounded border-[#292929] bg-[#0d0d0d]"
+                      />
+                      Drive link required
+                    </label>
+
+                    <label
+                      htmlFor="ticket-drive-link"
+                      className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]"
+                    >
+                      Drive link
+                    </label>
+                    <Input
+                      id="ticket-drive-link"
+                      value={form.driveLink}
+                      onChange={(event) =>
+                        updateField(
+                          "driveLink",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="https://drive.google.com/..."
+                      className="border-[#292929] bg-[#0d0d0d] text-white placeholder:text-[#555]"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  <label
+                    htmlFor="ticket-review-feedback"
+                    className="text-xs font-medium uppercase tracking-[0.12em] text-[#777]"
+                  >
+                    Review feedback
+                  </label>
+                  <Textarea
+                    id="ticket-review-feedback"
+                    value={form.reviewFeedback}
+                    onChange={(event) =>
+                      updateField(
+                        "reviewFeedback",
+                        event.target.value,
+                      )
+                    }
+                    rows={3}
+                    placeholder="Notes for the assignee or reviewer"
+                    className="resize-none border-[#292929] bg-[#0d0d0d] text-white placeholder:text-[#555]"
+                  />
+                </div>
+
+                {ticket.status === "review" && onReviewDecision ? (
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <Button
+                      type="button"
+                      onClick={() => void handleReviewSubmit("approve")}
+                      className="bg-emerald-500 text-black hover:bg-emerald-400"
+                    >
+                      <Check className="mr-2 h-4 w-4" />
+                      Approve
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => void handleReviewSubmit("request_changes")}
+                    >
+                      Request changes
+                    </Button>
+                  </div>
+                ) : onSubmitForReview && ticket.status !== "done" ? (
+                  <div className="mt-5">
+                    <Button
+                      type="button"
+                      onClick={() => void onSubmitForReview(ticket.id, form.driveLink || null)}
+                      className="bg-[var(--accent-color)] text-black hover:bg-[color-mix(in_srgb,var(--accent-color)_90%,white)]"
+                    >
+                      Submit for review
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="rounded-2xl border border-[#242424] bg-[#121212] p-4">
                   <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#666]">
