@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
-from app.core.enums import UserRole
+from app.core.enums import UserRole, UserStatus
 from app.db.database import get_db
 from app.models.ticket import Ticket
 from app.models.project import Project
@@ -89,6 +89,9 @@ def next_ticket_key(db: Session) -> str:
     return f"LEL-{max_number + 1:03d}"
 
 def can_assign(assigner: User, assignee: User) -> bool:
+    if assignee.status != UserStatus.APPROVED:
+        return False
+
     if assigner.role == UserRole.ADMIN:
         return assignee.role in (UserRole.HEAD, UserRole.MEMBER)
     if assigner.role == UserRole.HEAD:
