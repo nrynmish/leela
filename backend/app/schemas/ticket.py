@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -51,6 +52,33 @@ class TicketUpdate(BaseModel):
     assignee_id: int | None = None
 
 
+class BulkTicketCreate(BaseModel):
+    title: str = Field(
+        min_length=1,
+        max_length=255,
+    )
+
+    summary: str = Field(
+        min_length=1,
+    )
+
+    status: TicketStatus = TicketStatus.BACKLOG
+
+    priority: TicketPriority = TicketPriority.MEDIUM
+
+    labels: list[str] = Field(
+        default_factory=list,
+    )
+
+    project_id: int
+
+    assignee_ids: list[int] = Field(
+        min_length=1,
+    )
+
+    assignment_mode: Literal["individual", "common"] = "individual"
+
+
 class AssigneeResponse(BaseModel):
     id: int
     name: str
@@ -71,6 +99,13 @@ class TicketResponse(BaseModel):
     labels: list[str]
     project_id: int
     assignee: AssigneeResponse | None
+    assignees: list[AssigneeResponse] = Field(default_factory=list)
     created_by: int
     created_at: datetime
     updated_at: datetime
+
+
+class BulkTicketCreateResponse(BaseModel):
+    created_count: int
+    assignment_mode: Literal["individual", "common"]
+    tickets: list[TicketResponse]

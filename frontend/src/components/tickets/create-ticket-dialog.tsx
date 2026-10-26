@@ -43,6 +43,8 @@ type CreateTicketForm = {
   priority: Priority;
   project_id: number | "";
   assignee_id: number | null;
+  assignee_ids: number[];
+  assignment_mode: "individual" | "common";
   labels: string;
 };
 
@@ -75,6 +77,8 @@ function buildInitialState(
       projects[0]?.id ??
       "",
     assignee_id: null,
+    assignee_ids: [],
+    assignment_mode: "individual",
     labels: "",
   };
 }
@@ -105,10 +109,31 @@ export function CreateTicketDialog({
 
   const [error, setError] =
     React.useState<string | null>(null);
+  const [searchTerm, setSearchTerm] =
+    React.useState("");
 
   const assignableUsers = currentUser
     ? users.filter((u) => canAssign(currentUser, u))
     : [];
+
+  const selectedAssignees = assignableUsers.filter(
+    (user) => form.assignee_ids.includes(user.id),
+  );
+
+  const filteredUsers = assignableUsers.filter(
+    (user) =>
+      !form.assignee_ids.includes(user.id) &&
+      user.full_name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()),
+  );
+
+  const expectedTicketCount =
+    form.assignee_ids.length === 0
+      ? 1
+      : form.assignment_mode === "individual"
+        ? form.assignee_ids.length
+        : 1;
 
   function resetForm() {
     setForm(
@@ -132,6 +157,24 @@ export function CreateTicketDialog({
   function handleCreateClick() {
     resetForm();
     setOpen(true);
+  }
+
+  function toggleAssignee(userId: number) {
+    setForm((current) => {
+      const selected = current.assignee_ids.includes(userId);
+      const assigneeIds = selected
+        ? current.assignee_ids.filter((id) => id !== userId)
+        : [...current.assignee_ids, userId];
+
+      return {
+        ...current,
+        assignee_ids: assigneeIds,
+        assignee_id:
+          assigneeIds.length > 0
+            ? assigneeIds[0]
+            : null,
+      };
+    });
   }
 
   async function handleSubmit(
@@ -162,7 +205,10 @@ export function CreateTicketDialog({
         status: form.status,
         priority: form.priority,
         project_id: form.project_id,
-        assignee_id: form.assignee_id,
+        assignee_id:
+          form.assignee_ids[0] ?? null,
+        assignee_ids: form.assignee_ids,
+        assignment_mode: form.assignment_mode,
         labels: form.labels
           .split(",")
           .map((label) => label.trim())
@@ -291,22 +337,86 @@ export function CreateTicketDialog({
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">
-                  Assignee
+                  Assignees
+                </label>
+
+                <div className="space-y-3 rounded-[14px] border border-[#262626] bg-[#141414] p-3">
+                  <Input
+                    value={searchTerm}
+                    onChange={(event) =>
+                      setSearchTerm(event.target.value)
+                    }
+                    placeholder="Search members"
+                  />
+
+                  <div className="flex flex-wrap gap-2">
+                    {selectedAssignees.length === 0 ? (
+                      <span className="text-xs text-[#A0A0A0]">
+                        No assignees selected
+                      </span>
+                    ) : (
+                      selectedAssignees.map((user) => (
+                        <button
+                          key={user.id}
+                          type="button"
+                          onClick={() =>
+                            toggleAssignee(user.id)
+                          }
+                          className="inline-flex items-center gap-2 rounded-full border border-[var(--accent-color)]/40 bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] px-2.5 py-1 text-xs text-white"
+                        >
+                          {user.full_name}
+                          <span aria-hidden="true">×</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="max-h-40 space-y-1 overflow-y-auto rounded-xl border border-[#262626] bg-[#0D0D0D] p-2">
+                    {filteredUsers.length === 0 ? (
+                      <p className="px-2 py-1 text-xs text-[#A0A0A0]">
+                        No matching members found.
+                      </p>
+                    ) : (
+                      filteredUsers.map((user) => (
+                        <button
+                          key={user.id}
+                          type="button"
+                          onClick={() =>
+                            toggleAssignee(user.id)
+                          }
+                          className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-sm text-white hover:bg-[#1A1A1A]"
+                        >
+                          <span>{user.full_name}</span>
+                          <span className="text-xs text-[#A0A0A0]">
+                            {user.department}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <p className="text-xs text-[#A0A0A0]">
+                  {form.assignee_ids.length === 0
+                    ? "No assignee selected — the ticket will be created unassigned."
+                    : `${form.assignee_ids.length} assignee${form.assignee_ids.length === 1 ? "" : "s"} selected — ${expectedTicketCount} ticket${expectedTicketCount === 1 ? "" : "s"} will be created.`}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Assignment mode
                 </label>
 
                 <Select
-                  value={
-                    form.assignee_id === null
-                      ? "unassigned"
-                      : String(form.assignee_id)
-                  }
+                  value={form.assignment_mode}
                   onValueChange={(value) =>
                     setForm((current) => ({
                       ...current,
-                      assignee_id:
-                        value === "unassigned"
-                          ? null
-                          : Number(value),
+                      assignment_mode:
+                        value === "common"
+                          ? "common"
+                          : "individual",
                     }))
                   }
                 >
@@ -315,18 +425,12 @@ export function CreateTicketDialog({
                   </SelectTrigger>
 
                   <SelectContent>
-                    <SelectItem value="unassigned">
-                      Unassigned
+                    <SelectItem value="individual">
+                      Individual tickets
                     </SelectItem>
-
-                    {assignableUsers.map((u) => (
-                      <SelectItem
-                        key={u.id}
-                        value={String(u.id)}
-                      >
-                        {u.full_name}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="common">
+                      Common ticket
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

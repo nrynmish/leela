@@ -1,14 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
 from app.core.enums import UserRole, UserStatus
 from app.db.database import get_db
-from app.models.ticket import Ticket
+from app.models.ticket import Ticket, TicketAssignee
 from app.models.project import Project
 from app.models.user import User
 from app.schemas.ticket import (
+    BulkTicketCreate,
+    BulkTicketCreateResponse,
     TicketCreate,
     TicketUpdate,
     TicketResponse,
@@ -22,30 +24,67 @@ router = APIRouter(
 )
 
 
+def build_assignee_response(user: User | None) -> AssigneeResponse | None:
+    if not user:
+        return None
+
+    initials = "".join(
+        part[0]
+        for part in user.full_name.split()
+        if part
+    )[:2].upper()
+
+    return AssigneeResponse(
+        id=user.id,
+        name=user.full_name,
+        initials=initials,
+    )
+
+
+def get_ticket_assignments(db: Session, ticket_id: int) -> list[User]:
+    assignment_rows = db.scalars(
+        select(TicketAssignee.user_id).where(
+            TicketAssignee.ticket_id == ticket_id,
+        )
+    ).all()
+
+    ids = list(dict.fromkeys(assignment_rows))
+    if not ids:
+        assignee_id = db.scalar(
+            select(Ticket.assignee_id).where(
+                Ticket.id == ticket_id,
+            )
+        )
+        if assignee_id is not None:
+            ids = [assignee_id]
+
+    if not ids:
+        return []
+
+    return db.scalars(
+        select(User).where(User.id.in_(ids))
+    ).all()
+
+
 def serialize_ticket(
     ticket: Ticket,
     db: Session,
 ) -> TicketResponse:
     assignee = None
+    assignees = []
 
-    if ticket.assignee_id:
-        user = db.get(
-            User,
-            ticket.assignee_id,
+    assigned_users = get_ticket_assignments(db, ticket.id)
+    for user in assigned_users:
+        assignee_response = build_assignee_response(user)
+        if assignee_response is not None:
+            assignees.append(assignee_response)
+
+    if assignees:
+        assignee = assignees[0]
+    elif ticket.assignee_id:
+        assignee = build_assignee_response(
+            db.get(User, ticket.assignee_id)
         )
-
-        if user:
-            initials = "".join(
-                part[0]
-                for part in user.full_name.split()
-                if part
-            )[:2].upper()
-
-            assignee = AssigneeResponse(
-                id=user.id,
-                name=user.full_name,
-                initials=initials,
-            )
 
     return TicketResponse(
         id=ticket.id,
@@ -61,6 +100,7 @@ def serialize_ticket(
         ],
         project_id=ticket.project_id,
         assignee=assignee,
+        assignees=assignees,
         created_by=ticket.created_by,
         created_at=ticket.created_at,
         updated_at=ticket.updated_at,
@@ -110,28 +150,33 @@ def can_view_ticket(
     if current_user.role == UserRole.ADMIN:
         return True
 
+    assignee_ids = {ticket.assignee_id} if ticket.assignee_id is not None else set()
+    assignee_ids |= {
+        user_id
+        for user_id, in db.execute(
+            select(TicketAssignee.user_id).where(
+                TicketAssignee.ticket_id == ticket.id,
+            )
+        ).all()
+    }
+
     if current_user.role == UserRole.MEMBER:
-        return ticket.assignee_id == current_user.id
+        return current_user.id in assignee_ids
 
     if current_user.role == UserRole.HEAD:
-        if ticket.assignee_id == current_user.id:
+        if current_user.id in assignee_ids:
             return True
 
         if ticket.created_by == current_user.id:
             return True
 
-        if ticket.assignee_id is not None:
-            assignee = db.get(
-                User,
-                ticket.assignee_id,
-            )
-
-            if (
-                assignee
-                and assignee.department
-                == current_user.department
-            ):
-                return True
+        if any(
+            assignee_id is not None
+            and db.get(User, assignee_id) is not None
+            and db.get(User, assignee_id).department == current_user.department
+            for assignee_id in assignee_ids
+        ):
+            return True
 
         return False
 
@@ -202,6 +247,52 @@ def get_ticket(
     )
 
 
+def validate_assignee_ids(
+    db: Session,
+    current_user: User,
+    assignee_ids: list[int],
+) -> list[User]:
+    if not assignee_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one assignee is required",
+        )
+
+    unique_ids = []
+    seen = set()
+
+    for assignee_id in assignee_ids:
+        if assignee_id in seen:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Duplicate assignee IDs are not allowed",
+            )
+        seen.add(assignee_id)
+
+        assignee = db.get(User, assignee_id)
+        if not assignee:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Assignee not found: {assignee_id}",
+            )
+
+        if assignee.status != UserStatus.APPROVED:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"User is not approved for assignment: {assignee_id}",
+            )
+
+        if not can_assign(current_user, assignee):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"You cannot assign tickets to this user: {assignee_id}",
+            )
+
+        unique_ids.append(assignee)
+
+    return unique_ids
+
+
 @router.post(
     "",
     response_model=TicketResponse,
@@ -251,6 +342,19 @@ def create_ticket(
         created_by=current_user.id,
     )
 
+    if payload.assignee_id is not None:
+        db.add(ticket)
+        db.commit()
+        db.refresh(ticket)
+        db.add(
+            TicketAssignee(
+                ticket_id=ticket.id,
+                user_id=payload.assignee_id,
+            )
+        )
+        db.commit()
+        return serialize_ticket(ticket, db)
+
     db.add(ticket)
     db.commit()
     db.refresh(ticket)
@@ -258,6 +362,102 @@ def create_ticket(
     return serialize_ticket(
         ticket,
         db,
+    )
+
+
+@router.post(
+    "/bulk",
+    response_model=BulkTicketCreateResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_bulk_tickets(
+    payload: BulkTicketCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role not in (
+        UserRole.ADMIN,
+        UserRole.HEAD,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to create tickets",
+        )
+
+    project = db.get(Project, payload.project_id)
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found",
+        )
+
+    assignees = validate_assignee_ids(
+        db,
+        current_user,
+        payload.assignee_ids,
+    )
+
+    created_tickets = []
+
+    try:
+        if payload.assignment_mode == "individual":
+            for assignee in assignees:
+                ticket = Ticket(
+                    key=next_ticket_key(db),
+                    title=payload.title,
+                    summary=payload.summary,
+                    status=payload.status,
+                    priority=payload.priority,
+                    labels=", ".join(payload.labels),
+                    project_id=payload.project_id,
+                    assignee_id=assignee.id,
+                    created_by=current_user.id,
+                )
+                db.add(ticket)
+                db.flush()
+                db.add(
+                    TicketAssignee(
+                        ticket_id=ticket.id,
+                        user_id=assignee.id,
+                    )
+                )
+                created_tickets.append(ticket)
+
+            db.commit()
+        else:
+            ticket = Ticket(
+                key=next_ticket_key(db),
+                title=payload.title,
+                summary=payload.summary,
+                status=payload.status,
+                priority=payload.priority,
+                labels=", ".join(payload.labels),
+                project_id=payload.project_id,
+                assignee_id=assignees[0].id,
+                created_by=current_user.id,
+            )
+            db.add(ticket)
+            db.flush()
+
+            for assignee in assignees:
+                db.add(
+                    TicketAssignee(
+                        ticket_id=ticket.id,
+                        user_id=assignee.id,
+                    )
+                )
+
+            db.commit()
+            created_tickets = [ticket]
+    except Exception:
+        db.rollback()
+        raise
+
+    serialized = [serialize_ticket(ticket, db) for ticket in created_tickets]
+    return BulkTicketCreateResponse(
+        created_count=len(serialized),
+        assignment_mode=payload.assignment_mode,
+        tickets=serialized,
     )
 
 
@@ -419,5 +619,17 @@ def delete_ticket(
                 detail="Heads can only delete tickets they created",
             )
 
-    db.delete(ticket)
-    db.commit()
+    try:
+        db.execute(
+            delete(TicketAssignee).where(
+                TicketAssignee.ticket_id == ticket_id,
+            )
+        )
+        db.delete(ticket)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete ticket",
+        )

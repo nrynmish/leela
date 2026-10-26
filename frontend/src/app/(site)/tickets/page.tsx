@@ -27,6 +27,7 @@ import { TicketsTable } from "@/components/tickets/tickets-table";
 import { getProjects, type Project } from "@/lib/projects";
 
 import {
+  createBulkTickets,
   createTicket,
   deleteTicket,
   getTickets,
@@ -110,6 +111,31 @@ export default function TicketsPage() {
   async function handleCreateTicket(draft: TicketDraft) {
     try {
       setError(null);
+
+      const assigneeIds = draft.assignee_ids ?? [];
+      const shouldUseBulk =
+        assigneeIds.length > 1 ||
+        draft.assignment_mode === "common";
+
+      if (shouldUseBulk) {
+        const response = await createBulkTickets({
+          title: draft.title,
+          summary: draft.summary,
+          status: draft.status,
+          priority: draft.priority,
+          labels: draft.labels,
+          project_id: draft.project_id,
+          assignee_id: draft.assignee_id,
+          assignee_ids: assigneeIds,
+          assignment_mode: draft.assignment_mode,
+        });
+
+        setTickets((current) => [
+          ...response.tickets,
+          ...current,
+        ]);
+        return;
+      }
 
       const created = await createTicket({
         title: draft.title,

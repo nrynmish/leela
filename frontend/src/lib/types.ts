@@ -46,6 +46,8 @@ export type Ticket = {
   updated_at: string;
 };
 
+export type AssignmentMode = "individual" | "common";
+
 export type TicketCreate = {
   title: string;
   summary: string;
@@ -54,6 +56,8 @@ export type TicketCreate = {
   labels: string[];
   project_id: number;
   assignee_id: number | null;
+  assignee_ids?: number[];
+  assignment_mode?: AssignmentMode;
 };
 
 export type TicketUpdate = {
@@ -73,5 +77,7 @@ export type TicketDraft = {
   priority: Priority;
   project_id: number;
   assignee_id: number | null;
+  assignee_ids: number[];
+  assignment_mode: AssignmentMode;
   labels: string[];
 };

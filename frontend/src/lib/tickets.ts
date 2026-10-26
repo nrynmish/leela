@@ -1,5 +1,9 @@
 import { apiFetch } from "@/lib/api";
-import type { Priority, TicketStatus } from "@/lib/types";
+import type {
+  AssignmentMode,
+  Priority,
+  TicketStatus,
+} from "@/lib/types";
 
 export type TicketAssignee = {
   id: number;
@@ -30,9 +34,17 @@ export type TicketCreate = {
   labels: string[];
   project_id: number;
   assignee_id: number | null;
+  assignee_ids?: number[];
+  assignment_mode?: AssignmentMode;
 };
 
 export type TicketUpdate = Partial<TicketCreate>;
+
+export type BulkTicketCreateResponse = {
+  created_count: number;
+  assignment_mode: AssignmentMode;
+  tickets: Ticket[];
+};
 
 export async function getTickets(): Promise<Ticket[]> {
   return apiFetch("/tickets");
@@ -46,6 +58,15 @@ export async function createTicket(
   payload: TicketCreate,
 ): Promise<Ticket> {
   return apiFetch("/tickets", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function createBulkTickets(
+  payload: TicketCreate,
+): Promise<BulkTicketCreateResponse> {
+  return apiFetch("/tickets/bulk", {
     method: "POST",
     body: JSON.stringify(payload),
   });

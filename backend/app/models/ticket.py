@@ -5,12 +5,46 @@ from sqlalchemy import (
     ForeignKey,
     String,
     Text,
+    UniqueConstraint,
     Enum as SqlEnum,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.enums import TicketPriority, TicketStatus
 from app.db.database import Base
+
+
+class TicketAssignee(Base):
+    __tablename__ = "ticket_assignees"
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True,
+    )
+
+    ticket_id: Mapped[int] = mapped_column(
+        ForeignKey("tickets.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True,
+    )
+
+    ticket: Mapped["Ticket"] = relationship(
+        back_populates="assignee_links",
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "ticket_id",
+            "user_id",
+            name="uq_ticket_assignee",
+        ),
+    )
 
 
 class Ticket(Base):
@@ -71,6 +105,11 @@ class Ticket(Base):
     created_by: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         nullable=False,
+    )
+
+    assignee_links: Mapped[list["TicketAssignee"]] = relationship(
+        back_populates="ticket",
+        cascade="all, delete-orphan",
     )
 
     created_at: Mapped[datetime] = mapped_column(
