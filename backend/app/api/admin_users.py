@@ -8,13 +8,29 @@ from app.db.database import get_db
 from app.models.project import Project
 from app.models.ticket import Ticket
 from app.models.user import User
-from app.schemas.admin import UserRoleUpdate
+from app.schemas.admin import UserDepartmentUpdate, UserRoleUpdate
 from app.schemas.user import UserResponse
 
 router = APIRouter(
     prefix="/admin/users",
     tags=["Admin Users"],
 )
+
+
+def can_update_department(
+    current_user: User,
+    target_user: User,
+) -> bool:
+    if current_user.role == UserRole.ADMIN:
+        return target_user.role in (
+            UserRole.MEMBER,
+            UserRole.HEAD,
+        )
+
+    if current_user.role == UserRole.HEAD:
+        return target_user.role == UserRole.MEMBER
+
+    return False
 
 
 @router.get(
@@ -24,12 +40,60 @@ router = APIRouter(
 def list_users(
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_roles(UserRole.ADMIN)
+        require_roles(UserRole.ADMIN, UserRole.HEAD)
     ),
 ):
     return db.scalars(
         select(User).order_by(User.id.asc())
     ).all()
+
+
+@router.patch(
+    "/{user_id}/department",
+    response_model=UserResponse,
+)
+def update_user_department(
+    user_id: int,
+    payload: UserDepartmentUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles(UserRole.ADMIN, UserRole.HEAD)
+    ),
+):
+    user = db.get(User, user_id)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    if not can_update_department(current_user, user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to update this user's department",
+        )
+
+    department = payload.department.strip()
+
+    if not department:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Department is required",
+        )
+
+    if user.role == UserRole.HEAD and not department:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Department is required for a Head",
+        )
+
+    user.department = department
+
+    db.commit()
+    db.refresh(user)
+
+    return user
 
 
 @router.patch(

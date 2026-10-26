@@ -27,6 +27,7 @@ import {
 import {
   deleteUser,
   getAdminUsers,
+  updateUserDepartment,
   updateUserRole,
 } from "@/lib/users";
 import { useAuthStore } from "@/store/auth-store";
@@ -57,6 +58,31 @@ function roleBadgeVariant(role: UserRole) {
   return "outline" as const;
 }
 
+function canEditDepartment(
+  currentUser: User | null,
+  targetUser: User,
+): boolean {
+  if (!currentUser) {
+    return false;
+  }
+
+  if (currentUser.role === "admin") {
+    return (
+      targetUser.role === "member" ||
+      targetUser.role === "head"
+    );
+  }
+
+  if (currentUser.role === "head") {
+    return (
+      targetUser.id !== currentUser.id &&
+      targetUser.role === "member"
+    );
+  }
+
+  return false;
+}
+
 export default function UsersPage() {
   const currentUser = useAuthStore((state) => state.user);
 
@@ -73,7 +99,10 @@ export default function UsersPage() {
     useState<Record<number, string>>({});
 
   useEffect(() => {
-    if (currentUser?.role !== "admin") {
+    if (
+      currentUser?.role !== "admin" &&
+      currentUser?.role !== "head"
+    ) {
       setLoading(false);
       return;
     }
@@ -130,6 +159,10 @@ export default function UsersPage() {
     const department =
       selectedDepartments[user.id] ?? user.department;
 
+    const isDepartmentEdit =
+      currentUser?.role === "admin" ||
+      currentUser?.role === "head";
+
     if (role === "head" && !department.trim()) {
       setError("A department is required for a Head.");
       return;
@@ -139,13 +172,27 @@ export default function UsersPage() {
       setSavingId(user.id);
       setError(null);
 
-      const updatedUser = await updateUserRole(user.id, {
-        role,
-        department:
-          role === "head"
-            ? department.trim()
-            : department.trim() || null,
-      });
+      let updatedUser = user;
+
+      if (isDepartmentEdit && canEditDepartment(currentUser, user)) {
+        updatedUser = await updateUserDepartment(
+          user.id,
+          department.trim(),
+        );
+      }
+
+      if (
+        currentUser?.role === "admin" &&
+        role !== user.role
+      ) {
+        updatedUser = await updateUserRole(user.id, {
+          role,
+          department:
+            role === "head"
+              ? department.trim()
+              : department.trim() || null,
+        });
+      }
 
       setUsers((current) =>
         current.map((item) =>
@@ -208,7 +255,10 @@ export default function UsersPage() {
     }
   }
 
-  if (currentUser?.role !== "admin") {
+  if (
+    currentUser?.role !== "admin" &&
+    currentUser?.role !== "head"
+  ) {
     return (
       <div className="rounded-[24px] border border-[#262626] bg-[#0D0D0D] p-8">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 text-red-400">
@@ -220,7 +270,7 @@ export default function UsersPage() {
         </h1>
 
         <p className="mt-2 text-[#A0A0A0]">
-          Only administrators can manage users and roles.
+          Only administrators and heads can manage users.
         </p>
       </div>
     );
@@ -332,6 +382,13 @@ export default function UsersPage() {
 
                     const saving = savingId === user.id;
 
+                    const canChangeRole =
+                      currentUser?.role === "admin";
+
+                    const canDepartmentEdit =
+                      currentUser !== null &&
+                      canEditDepartment(currentUser, user);
+
                     const changed =
                       role !== user.role ||
                       department !== user.department;
@@ -386,6 +443,7 @@ export default function UsersPage() {
                             }
                             disabled={
                               saving ||
+                              !canChangeRole ||
                               (isSelf &&
                                 user.role === "admin")
                             }
@@ -427,7 +485,9 @@ export default function UsersPage() {
                                 }),
                               );
                             }}
-                            disabled={saving}
+                            disabled={
+                              saving || !canDepartmentEdit
+                            }
                           >
                             <SelectTrigger className="w-[210px]">
                               <SelectValue>
@@ -455,6 +515,12 @@ export default function UsersPage() {
                               disabled={
                                 saving ||
                                 !changed ||
+                                !(
+                                  (currentUser?.role === "admin" &&
+                                    role !== user.role) ||
+                                  (canDepartmentEdit &&
+                                    department !== user.department)
+                                ) ||
                                 (isSelf &&
                                   user.role === "admin" &&
                                   role !== "admin")

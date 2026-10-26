@@ -130,3 +130,126 @@ def test_head_and_member_cannot_delete_users(client, auth_headers, users):
         )
 
         assert response.status_code == 403
+
+
+def test_admin_can_update_member_department(client, auth_headers, users):
+    target = users["member"]
+    response = client.patch(
+        f"/admin/users/{target.id}/department",
+        json={"department": "Research and Outreach"},
+        headers=auth_headers(users["admin"]),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["department"] == "Research and Outreach"
+
+
+def test_admin_can_update_head_department(client, auth_headers, users):
+    target = users["head"]
+    response = client.patch(
+        f"/admin/users/{target.id}/department",
+        json={"department": "Mechanical"},
+        headers=auth_headers(users["admin"]),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["department"] == "Mechanical"
+
+
+def test_head_can_update_member_department(client, auth_headers, users):
+    target = users["member"]
+    response = client.patch(
+        f"/admin/users/{target.id}/department",
+        json={"department": "Electrical"},
+        headers=auth_headers(users["head"]),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["department"] == "Electrical"
+
+
+def test_head_cannot_update_other_head_department(client, auth_headers, users):
+    target = users["admin"]
+    response = client.patch(
+        f"/admin/users/{target.id}/department",
+        json={"department": "Software"},
+        headers=auth_headers(users["head"]),
+    )
+
+    assert response.status_code == 403
+
+
+def test_head_cannot_update_admin_department(client, auth_headers, users):
+    response = client.patch(
+        f"/admin/users/{users['admin'].id}/department",
+        json={"department": "Software"},
+        headers=auth_headers(users["head"]),
+    )
+
+    assert response.status_code == 403
+
+
+def test_member_cannot_update_department(client, auth_headers, users):
+    response = client.patch(
+        f"/admin/users/{users['head'].id}/department",
+        json={"department": "Software"},
+        headers=auth_headers(users["member"]),
+    )
+
+    assert response.status_code == 403
+
+
+def test_unauthenticated_user_cannot_update_department(client):
+    response = client.patch(
+        "/admin/users/1/department",
+        json={"department": "Software"},
+    )
+
+    assert response.status_code == 401
+
+
+def test_invalid_department_is_rejected(client, auth_headers, users):
+    response = client.patch(
+        f"/admin/users/{users['member'].id}/department",
+        json={"department": "   "},
+        headers=auth_headers(users["admin"]),
+    )
+
+    assert response.status_code == 422
+
+
+def test_department_update_keeps_role_and_status(client, auth_headers, users, db):
+    target = users["member"]
+    target.role = UserRole.HEAD
+    target.status = "rejected"
+    db.commit()
+
+    response = client.patch(
+        f"/admin/users/{target.id}/department",
+        json={"department": "Research and Outreach"},
+        headers=auth_headers(users["admin"]),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["role"] == "head"
+    assert response.json()["status"] == "rejected"
+
+
+def test_department_update_persists_after_refetch(client, auth_headers, users):
+    target = users["member"]
+    response = client.patch(
+        f"/admin/users/{target.id}/department",
+        json={"department": "Electrical"},
+        headers=auth_headers(users["admin"]),
+    )
+
+    assert response.status_code == 200
+
+    refreshed = client.get(
+        "/admin/users",
+        headers=auth_headers(users["admin"]),
+    )
+    user = next(
+        item for item in refreshed.json() if item["id"] == target.id
+    )
+    assert user["department"] == "Electrical"

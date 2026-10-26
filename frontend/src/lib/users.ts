@@ -14,6 +14,16 @@ export async function getAdminUsers(): Promise<User[]> {
   return apiFetch("/admin/users");
 }
 
+export async function updateUserDepartment(
+  userId: number,
+  department: string,
+): Promise<User> {
+  return apiFetch(`/admin/users/${userId}/department`, {
+    method: "PATCH",
+    body: JSON.stringify({ department }),
+  });
+}
+
 export async function updateUserRole(
   userId: number,
   payload: UserRoleUpdate,
